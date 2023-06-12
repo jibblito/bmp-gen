@@ -13,9 +13,8 @@ unsigned char* createBitmapInfoHeader(int height, int width);
 
 int main (int argc, char **argv)
 {
-    int borderwidth = 31;
-    int goopwidth = 1080;
-    int height = goopwidth + 2*borderwidth;
+    int borderwidth = 56;
+    int height = 1080;
     int width = lroundf((16.0f/9.0f)*(float)height);
     printf("Generating %dx%d image for ya!\n",width,height);
     unsigned char *image;
@@ -58,22 +57,25 @@ int main (int argc, char **argv)
         }
     }
 
-    int n_snakeys = 100;
+    int n_snakeys = 17;
     for (int snakeys = 0; snakeys < n_snakeys; snakeys++)
     {
       for (i = borderwidth; i < height-borderwidth; i++)
       {
         int offset = (int)(sin((double)i/30) * 20);
-        int snakewidth = 10;
-        int snakeset = (width/n_snakeys)*snakeys;
+        int snakeset = ((float)width/(float)n_snakeys)*(float)snakeys;
         int shade = 255 * (double)i/(height-borderwidth);
+        int snakewidth = 17;
         for (j=0; j < snakewidth; j++)
         {
-          unsigned char* pixelpointer =
-            image + i*rowlength + (snakeset+(2*borderwidth)+offset+j)*BYTES_PER_PIXEL;
-          *(pixelpointer+0)=shade;
-          *(pixelpointer+1)=255-shade;
-          *(pixelpointer+2)=255*(double)j/snakewidth;;
+          int pixel_x = (snakeset+offset+j + i*2) % width;
+          if (pixel_x > borderwidth && pixel_x <= width-borderwidth)
+          {
+            unsigned char* pixelpointer = image + i*rowlength + pixel_x*BYTES_PER_PIXEL;
+            *(pixelpointer+0)=shade;
+            *(pixelpointer+1)=255-shade;
+            *(pixelpointer+2)=255*(double)j/snakewidth;;
+          }
         } 
       }
     }
