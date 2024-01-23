@@ -1,3 +1,17 @@
+/**
+ * Driver function for generate bitmap..
+ *
+ * Need to separate the file I/O into a separate file..
+ * Want to support ability to read an input image in and
+ * interpret it as a bitmap.
+ *
+ * Currently working with 480x480 images
+ * Currently too lazy to do a separate file!!!! Shouldn't
+ * take too long tho... but the functionality is quite simple...
+ * This file could be made much simpler if its only function was
+ * call read file, draw things, write file
+ */
+
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -52,31 +66,6 @@ int main (int argc, char **argv)
     // drawLine(image,rowlength,0,50,200,200);
     // drawLineConColor(image,rowlength,200,200,300,100,blue);
     
-
-    /*
-    int n_snakeys = 17;
-    for (int snakeys = 0; snakeys < n_snakeys; snakeys++)
-    {
-      for (i = borderwidth; i < height-borderwidth; i++)
-      {
-        int offset = (int)(sin((double)i/30) * 20);
-        int snakeset = ((float)width/(float)n_snakeys)*(float)snakeys;
-        int shade = 255 * (double)i/(height-borderwidth);
-        int snakewidth = 17;
-        for (j=0; j < snakewidth; j++)
-        {
-          int pixel_x = (snakeset+offset+j + i*2) % width;
-          if (pixel_x > borderwidth && pixel_x <= width-borderwidth)
-          {
-            unsigned char* pixelpointer = image + i*rowlength + pixel_x*BYTES_PER_PIXEL;
-            *(pixelpointer+0)=shade;
-            *(pixelpointer+1)=255-shade;
-            *(pixelpointer+2)=255*(double)j/snakewidth;;
-          }
-        } 
-      }
-    }
-    */
 
     generateBitmapImage((unsigned char*) image, height, width, imageFileName);
     printf("Image generated!!\n");

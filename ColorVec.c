@@ -1,3 +1,12 @@
+/**
+ * ColorVec.c: Implementation of ColorVec.h
+ *
+ * Idea: Simplify graphical colors (3-channel) for an easy-to-use
+ * data structure. In future may support alpha...
+ *
+ * Red-Green-Blue
+ */
+
 #include <stdio.h>
 #include "ColorVec.h"
 #include <stdlib.h>
