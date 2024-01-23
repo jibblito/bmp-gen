@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include "shapes.c"
 
 const int BYTES_PER_PIXEL = 3; /// red, green, & blue
 const int FILE_HEADER_SIZE = 14;
@@ -14,8 +15,8 @@ unsigned char* createBitmapInfoHeader(int height, int width);
 int main (int argc, char **argv)
 {
     int borderwidth = 56;
-    int height = 1080;
-    int width = lroundf((16.0f/9.0f)*(float)height);
+    int height = 480;
+    int width = height;
     printf("Generating %dx%d image for ya!\n",width,height);
     unsigned char *image;
     image =  malloc(height * width * BYTES_PER_PIXEL);
@@ -23,40 +24,36 @@ int main (int argc, char **argv)
     char imageFileName[32];
     if (argc == 1)
     {
-      fprintf(stderr, "Yo, uou have one atrgument. This is annerror!!: %s\n",argv[0]);
+      fprintf(stderr, "Yo, you have one argument. This is an error!: %s\n",argv[0]);
       exit(1);
     }
     if (argc >= 2)
     {
-      fprintf(stdout, "Yo, uou have two atrgumenti: %s & %s\n",argv[0],argv[1]);
+      fprintf(stdout, "Yo, you have two arguments: %s & %s\n",argv[0],argv[1]);
       sprintf(imageFileName,"%s.bmp",argv[1]);
     }
 
-    int i, j;
-    int rowlength = width*BYTES_PER_PIXEL;
-    for (i = 0; i < height; i++) {
-        for (j = 0; j < width; j++) {
-          unsigned char* pixelpointer = image + i*rowlength + j*BYTES_PER_PIXEL;
-          if (i < borderwidth || i > height-borderwidth-1 || j < borderwidth || j > width-borderwidth-1)
-          {
-            if (j%5 == 0 || i % 5 == 0) {
-              *(pixelpointer+0) = 0;
-              *(pixelpointer+1) = 255*sinf(i/2);;
-              *(pixelpointer+2) = 0;
-            } else {
-              *(pixelpointer+0) = (unsigned char) ( 255 * sin((double)i) );             ///red
-              *(pixelpointer+1) =  (unsigned char) ( 10);              ///green
-              *(pixelpointer+2) =  (unsigned char) ( 10); ///blue
-            }
-          } else {
-              *(pixelpointer + 0) = (unsigned char) ( 10 );             ///red
-              *(pixelpointer + 1) = (unsigned char) ( 100 );              ///green
-              *(pixelpointer + 2) = (unsigned char) ( 255 * sin((double)j/10 + (double)i/10));
+    struct ColorVec* blue = initColor(0,0,255);
 
-          }
-        }
+
+    /**
+     * experiment zone
+     */
+    int rowlength = height;
+    drawGradiSquare(image,height*3,0,0,height);
+    drawSquare(image,height*3,1,100,height-200);
+    int i;
+    for (i = 0; i < width; i++) {
+      plot(image,height*3,i,40,blue);
     }
+    // drawGradiSquare(image,rowlength,0,0,width);
+    // drawLine(image,rowlength,1,1,300,13);
+    // drawLine(image,rowlength,300,13,0,50);
+    // drawLine(image,rowlength,0,50,200,200);
+    // drawLineConColor(image,rowlength,200,200,300,100,blue);
+    
 
+    /*
     int n_snakeys = 17;
     for (int snakeys = 0; snakeys < n_snakeys; snakeys++)
     {
@@ -79,6 +76,7 @@ int main (int argc, char **argv)
         } 
       }
     }
+    */
 
     generateBitmapImage((unsigned char*) image, height, width, imageFileName);
     printf("Image generated!!\n");
