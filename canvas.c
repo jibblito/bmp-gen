@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include "canvas.h"
 
-
 struct Canvas *initCanvas(int height, int width, char *name) {
   struct Canvas *cvs = (struct Canvas*)malloc(sizeof(struct Canvas)); 
   cvs->height = height;
   cvs->width = width;
+  cvs->rowlength = width * BYTES_PER_PIXEL;
   sprintf(cvs->name, name);
   cvs->image = malloc(height * width * BYTES_PER_PIXEL);
 }

@@ -14,6 +14,7 @@
 
 struct Canvas {
   int height, width;
+  int rowlength;
   unsigned char *image;
   char name[MAX_FILENAME_LENGTH];
 };

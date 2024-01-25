@@ -130,6 +130,14 @@ int plot(unsigned char *image, int rowlength, int x, int y, struct ColorVec *clr
   *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
 }
 
+int plot_cvs(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
+  unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
+                                ((int)x) * BYTES_PER_PIXEL);
+  *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
+  *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
+  *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
+}
+
 /**
  * Draw a triangle. Utilizes other helper functions such as draw line.
  */
