@@ -5,8 +5,8 @@
  */
 #include "ColorVec.h"
 #include <stdio.h>
+#include "canvas.h"
 
-extern const int BYTES_PER_PIXEL;
 
 /**
  * Draw a square of a set color!

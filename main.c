@@ -35,7 +35,6 @@ int main (int argc, char **argv)
     }
     if (argc >= 2)
     {
-      fprintf(stdout, "Yo, you have two arguments: %s & %s\n",argv[0],argv[1]);
       sprintf(imageFileName,"%s.bmp",argv[1]);
     }
 
@@ -48,13 +47,17 @@ int main (int argc, char **argv)
     /**
      * experiment zone
      */
-    int rowlength = height;
-    drawGradiSquare(image,height*3,0,0,height);
-    drawSquare(image,height*3,1,100,height-200);
+
+    plot(beall->image, beall->height*3, 10, 10, blue);
     int i;
-    for (i = 0; i < width; i++) {
-      plot(image,height*3,i,40,blue);
+    for (i = 0; i < beall->width; i++) {
+      plot(beall->image,beall->height*3,i,40,blue);
     }
+
+    //int rowlength = height;
+    //drawGradiSquare(beall->image,height*3,0,0,height);
+    //drawSquare(image,height*3,1,100,height-200);
+    // int i;
     // drawGradiSquare(image,rowlength,0,0,width);
     // drawLine(image,rowlength,1,1,300,13);
     // drawLine(image,rowlength,300,13,0,50);
@@ -62,14 +65,18 @@ int main (int argc, char **argv)
     // drawLineConColor(image,rowlength,200,200,300,100,blue);
     
 
-    generateBitmapImage((unsigned char*) image, height, width, imageFileName);
+    //generateBitmapImage((unsigned char*) image, height, width, imageFileName);
+    generateBitmapImage(beall);
     printf("Image generated!!\n");
     free(image);
 }
 
+
+
 /**
  * Open and write the bitmap image file... Given a name, image, and a width.....
  */
+/**
 void generateBitmapImage (unsigned char* image, int height, int width, char* imageFileName)
 {
     int widthInBytes = width * BYTES_PER_PIXEL;
@@ -95,3 +102,5 @@ void generateBitmapImage (unsigned char* image, int height, int width, char* ima
 
     fclose(imageFile);
 }
+
+*/

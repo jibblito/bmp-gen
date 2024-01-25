@@ -15,10 +15,10 @@
 struct Canvas {
   int height, width;
   unsigned char *image;
-  char *name[MAX_FILENAME_LENGTH];
+  char name[MAX_FILENAME_LENGTH];
 };
 
-void generateBitmapImage(unsigned char* image, int height, int width, char* imageFileName);
+void generateBitmapImage(struct Canvas *cvs);
 unsigned char* createBitmapFileHeader(int height, int stride);
 unsigned char* createBitmapInfoHeader(int height, int width);
 struct Canvas *initCanvas(int height, int width, char *name);

@@ -23,9 +23,9 @@ void generateBitmapImage(struct Canvas *cvs) {
   int widthInBytes = cvs->width * BYTES_PER_PIXEL;
   unsigned char padding[3] = {0,0,0};
   int paddingSize = (4 - (widthInBytes) % 4) % 4;
-  int stride = (widtnInBytes) + paddingSize;
+  int stride = (widthInBytes) + paddingSize;
 
-  FILE* imageFile = fopen(imageFileName, "wb");
+  FILE* imageFile = fopen(cvs->name, "wb");
 
   unsigned char* fileHeader = createBitmapFileHeader(cvs->height, stride);
   fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
@@ -33,8 +33,8 @@ void generateBitmapImage(struct Canvas *cvs) {
   fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
 
   int i;
-  for (i = 0; i < height; i++) {
-    fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
+  for (i = 0; i < cvs->height; i++) {
+    fwrite(cvs->image + (i * widthInBytes), BYTES_PER_PIXEL, cvs->width, imageFile);
     fwrite(padding, 1, paddingSize, imageFile);
   }
   fclose(imageFile);
