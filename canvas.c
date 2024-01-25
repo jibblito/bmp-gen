@@ -4,13 +4,15 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include "canvas.h"
 
 
 struct Canvas *initCanvas(int height, int width, char *name) {
   struct Canvas *cvs = (struct Canvas*)malloc(sizeof(struct Canvas)); 
-  *(cvs->height) = height;
-  *(cvs->width) = width;
-  strcpy(cvs->name, name);
+  cvs->height = height;
+  cvs->width = width;
+  sprintf(cvs->name, name);
   cvs->image = malloc(height * width * BYTES_PER_PIXEL);
 }
 

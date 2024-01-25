@@ -7,10 +7,10 @@
  * later on the backends will be interchangeable (.bmp, .jpg, etc)
  */
 
-const int BYTES_PER_PIXEL = 3;
-const int FILE_HEADER_SIZE = 14; // length in bytes of header
-const int INFO_HEADER_SIZE = 40; // length in bytes of info header
-const int MAX_FILENAME_LENGTH = 32;
+#define MAX_FILENAME_LENGTH 32
+#define BYTES_PER_PIXEL 3
+#define FILE_HEADER_SIZE 14 // length in bytes of header
+#define INFO_HEADER_SIZE 40 // length in bytes of info header
 
 struct Canvas {
   int height, width;
