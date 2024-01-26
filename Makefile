@@ -1,5 +1,8 @@
 all: main
 
+run:
+	./bmp-gen y
+
 main: main.c
 	gcc main.c ColorVec.c canvas.c -g -lm -o bmp-gen
 

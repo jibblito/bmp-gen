@@ -3,8 +3,9 @@
  *
  * Uses ColorVec.h to coordinate colors.
  */
-#include "ColorVec.h"
 #include <stdio.h>
+#include <math.h>
+#include "ColorVec.h"
 #include "canvas.h"
 
 
@@ -118,24 +119,42 @@ int drawLineConColor(unsigned char *image, int rowlength, int x1,int y1, int x2,
 }
 
 /**
- * Plot a pixel. This should really have three arguments: x,y, and clr
- *
- * @TODO: START HERE FOR ARGUMENT SIMPLIFICATION... FISH OUT *image and rowlength
- * por favor
+ * Plot a point on the canvas!
  */
-int plot(unsigned char *image, int rowlength, int x, int y, struct ColorVec *clr) {
-  unsigned char* pixelpointer = image + ((int)y)*rowlength + ((int)x)*BYTES_PER_PIXEL;
-  *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
-  *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
-  *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
-}
-
-int plot_cvs(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
+int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
+  if (x >cvs->width-1 || x < 0) {
+    fprintf(stderr,"X coordinate out of range for canvas!\n");
+    return 1;
+  }
+  if (y > cvs->height-1 || y < 0) {
+    fprintf(stderr,"Y coordinate out of range for canvas!\n");
+    return 1;
+  }
   unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
                                 ((int)x) * BYTES_PER_PIXEL);
   *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
   *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
   *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
+}
+
+/**
+ * Etch (outline) a circle, dude!
+ */
+int etchCircle(struct Canvas *cvs, int x, int y, int radius, struct ColorVec *clr) {
+  int rel_x = radius;
+  int rel_y = 0;
+  plot(cvs,x+rel_x,y+rel_y,clr);
+  while(rel_y < radius) {
+    if (rel_y < rel_x) {
+      rel_y = rel_y + 1;
+      rel_x = sqrtf(radius*radius-rel_y*rel_y);
+      plot(cvs,x+rel_x,y+rel_y,clr);
+    } else {
+      rel_x = rel_x - 1;
+      rel_y = sqrtf(radius*radius-rel_x*rel_x);
+      plot(cvs,x+rel_x,y+rel_y,clr);
+    }
+  }
 }
 
 /**

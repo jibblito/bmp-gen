@@ -21,7 +21,7 @@
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 480;
+    int height = 1000;
     int width = height;
 
     char imageFileName[32];
@@ -40,18 +40,33 @@ int main (int argc, char **argv)
 
     struct ColorVec* blue = initColor(0,0,255);
     struct ColorVec* red = initColor(255,0,0);
+    struct ColorVec* green = initColor(0,255,0);
+    struct ColorVec* slack_blue = initColor(50,30,177);
+    struct ColorVec* fuschia = initColor(230,3,102);
 
     /**
      * experiment zone
      */
 
-    plot(beall->image, beall->height*3, 10, 10, blue);
     int i;
     for (i = 0; i < beall->width; i++) {
-      plot_cvs(beall,i,40,blue);
-      plot_cvs(beall,i,i,red);
+      plot(beall,i,10,blue);
+      plot(beall,90,i,green);
+      plot(beall,i,i/2,slack_blue);
+      plot(beall,i,i,red);
     }
-    plot_cvs(beall,30,30,blue);
+    plot(beall,30,30,blue);
+    etchCircle(beall, 50, 50, 10, fuschia);
+
+    // etch cool circles
+    for (i = 100; i < 900; i++) {
+      int r = (int)(sin((float)i/26)*255);
+      int g = (int)(sin((float)i/17)*255);
+      int b = (int)(sin((float)i/31)*255);
+      struct ColorVec* clr = initColor(r,g,b);
+      
+      etchCircle(beall, 50, 50, i, clr);
+    }
 
     //int rowlength = height;
     //drawGradiSquare(beall->image,height*3,0,0,height);
