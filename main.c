@@ -21,7 +21,7 @@
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 1000;
+    int height = 100;
     int width = height;
 
     char imageFileName[32];
@@ -58,15 +58,7 @@ int main (int argc, char **argv)
     plot(beall,30,30,blue);
     etchCircle(beall, 50, 50, 10, fuschia);
 
-    // etch cool circles
-    for (i = 100; i < 900; i++) {
-      int r = (int)(sin((float)i/26)*255);
-      int g = (int)(sin((float)i/17)*255);
-      int b = (int)(sin((float)i/31)*255);
-      struct ColorVec* clr = initColor(r,g,b);
-      
-      etchCircle(beall, 50, 50, i, clr);
-    }
+
 
     //int rowlength = height;
     //drawGradiSquare(beall->image,height*3,0,0,height);

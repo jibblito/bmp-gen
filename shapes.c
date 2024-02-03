@@ -144,16 +144,48 @@ int etchCircle(struct Canvas *cvs, int x, int y, int radius, struct ColorVec *cl
   int rel_x = radius;
   int rel_y = 0;
   plot(cvs,x+rel_x,y+rel_y,clr);
-  while(rel_y < radius) {
+  while(rel_y < radius) { // Quadrant i
     if (rel_y < rel_x) {
       rel_y = rel_y + 1;
       rel_x = sqrtf(radius*radius-rel_y*rel_y);
-      plot(cvs,x+rel_x,y+rel_y,clr);
     } else {
       rel_x = rel_x - 1;
       rel_y = sqrtf(radius*radius-rel_x*rel_x);
-      plot(cvs,x+rel_x,y+rel_y,clr);
     }
+    plot(cvs,x+rel_x,y+rel_y,clr);
+  }
+
+  while(rel_y > 0) { // Quadrant ii
+     if (0-rel_x < rel_y) {
+       rel_x = rel_x - 1;
+       rel_y = sqrtf(radius*radius-rel_x*rel_x);
+     } else {
+      rel_y = rel_y - 1;
+      rel_x = 0 - sqrtf(radius*radius-rel_y*rel_y);
+    }
+    plot(cvs,x+rel_x,y+rel_y,clr);
+  }
+
+  while(rel_x < 0) { // Quadrant iii
+     if (rel_x < rel_y) {
+       rel_y = rel_y - 1;
+       rel_x = 0 - sqrtf(radius*radius-rel_y*rel_y);
+     } else {
+      rel_x = rel_x + 1;
+      rel_y = 0 - sqrtf(radius*radius-rel_x*rel_x);
+    }
+    plot(cvs,x+rel_x,y+rel_y,clr);
+  }
+
+  while(rel_y < 0) { // Quadrant iv
+     if (0 - rel_y > rel_x) {
+       rel_x = rel_x + 1;
+       rel_y = 0 - sqrtf(radius*radius-rel_x*rel_x);
+     } else {
+       rel_y = rel_y + 1;
+       rel_x = sqrtf(radius*radius-rel_y*rel_y);
+    }
+    plot(cvs,x+rel_x,y+rel_y,clr);
   }
 }
 
