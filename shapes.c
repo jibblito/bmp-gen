@@ -93,9 +93,7 @@ int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec*
   }
 
   int x_range = x_end-x_start;
-  fprintf(stderr,"X_range:%d\n",x_range);
   int y_range = y_end-y_start;
-  fprintf(stderr,"Y_range:%d\n",y_range);
 
   int i;
   float slope = (float)y_range/(float)x_range;
@@ -111,48 +109,12 @@ int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec*
         plot(cvs,x_start+rel_x,y_start+i,clr);
       }
     } else {
-      for (i = 0; i > y_range; i--) {
+      for (i = 0; i >= y_range; i--) {
         int rel_x = (int)roundf((1.0f/slope) * (float)i);
         plot(cvs,x_start+rel_x,y_start+i, clr);
       }
     }
   }
-}
-
-
-/**
- * Draw a line with a decided color. Can merge with above function at some point.
- *
- * ADDITIONAL IDEA: drawLineConGradient... a gradient line.. This would be good
- * for renders and such.
- */
-int drawLineConColor(unsigned char *image, int rowlength, int x1,int y1, int x2, int y2, struct ColorVec *clr) {
-  float x = x1;
-  float y = y1;
-
-  int rangex = x2-x1;
-  int rangey = y2-y1;
-  float resolution = 1000;
-
-  printColorVec(clr);
-
-  while ((int)x < x2 || (int)y < y2) {
-    // x = x + ((float)x1/(float)x2);
-    // y = y + ((float)y1/(float)y2);
-
-    x = x + (float)rangex/resolution;
-    y = y + (float)rangey/resolution;
-
-    unsigned char* pixelpointer = image + ((int)x)*rowlength + ((int)y)*BYTES_PER_PIXEL;
-    *(pixelpointer + 0) = (unsigned char) (255);
-    *(pixelpointer + 1) = (unsigned char) (255);
-    *(pixelpointer + 2) = (unsigned char) (255);
-  }
-
-  unsigned char* pixelpointer = image + ((int)x)*rowlength + ((int)y)*BYTES_PER_PIXEL;
-  *(pixelpointer + 0) = (unsigned char) (255);
-  *(pixelpointer + 1) = (unsigned char) (255);
-  *(pixelpointer + 2) = (unsigned char) (255);
 }
 
 /**

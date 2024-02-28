@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include "shapes.c"
 #include "canvas.h"
-#include "transformations.h"
+#include "transformations.c"
 
 int main (int argc, char **argv)
 {
@@ -73,20 +73,60 @@ int main (int argc, char **argv)
     }
     */
 
+    /**
+    // Joining of four Diamonds
     for (i = 0; i <= width; i++) {
-      r = (int)(((float)i/(float)width) * 155);
-      g = (int)(((float)i/(float)width) * 153);
-      b = (int)(((float)i/(float)width) * 251);
+      float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
+      r = 155 * shade_fac;
+      g = 153 * shade_fac;
+      b = 251 * shade_fac;
       struct ColorVec* giggle= initColor(r,g,b);
       drawLine(beall,i,0,width-i,width,giggle);
     }
     for (i = 0; i <= width; i++) {
+      float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
       r = (int)(((float)i/(float)width) * 255);
       g = (int)(((float)i/(float)width) * 243);
       b = (int)(((float)i/(float)width) * 231);
+      r = 255 * shade_fac;
+      g = 243 * shade_fac;
+      b = 231 * shade_fac;
+
       struct ColorVec* giggle= initColor(r,g,b);
       drawLine(beall,0,i,width,width-i,giggle);
     }
+    */
+
+    for (i = 0; i < width; i++) {
+      for (j = 0; j < width; j++) {
+        r = 155 * ((float)(j * i)/(float)(width*width));
+        g = 33;
+        b = sin(j);
+
+        int centroid_x = (float)(i/10) * (width/10);
+        int centroid_y = (float)(j/10) * (width/10);
+
+        drawLine(beall,i,j,
+      }
+    }
+
+    int x_runner = 0, y_runner = 0;
+    int center = width/2;
+    r=0;
+    g=0;
+    b=0;
+
+    /**
+    // Random Runner
+    while (x_runner < width) {
+      r = rand() % 155;
+      g = rand() % 155;
+      b = rand() % 155;
+      struct ColorVec* santiago = initColor(r,g,b);
+      drawLine(beall,x_runner,y_runner,center,center,santiago);
+      x_runner += 5;
+    }
+    */
 
 
     /**
