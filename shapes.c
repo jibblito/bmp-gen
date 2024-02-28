@@ -8,6 +8,26 @@
 #include "ColorVec.h"
 #include "canvas.h"
 
+/**
+ * Plot a point on the canvas! The basic functionality-function of the
+ * whole class of functions, yo!
+ */
+int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
+  if (x >cvs->width-1 || x < 0) {
+    fprintf(stderr,"X coordinate out of range for canvas!\n");
+    return 1;
+  }
+  if (y > cvs->height-1 || y < 0) {
+    fprintf(stderr,"Y coordinate out of range for canvas!\n");
+    return 1;
+  }
+  unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
+                                ((int)x) * BYTES_PER_PIXEL);
+  *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
+  *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
+  *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
+}
+
 
 /**
  * Draw a square of a set color!
@@ -56,32 +76,49 @@ int drawGradiSquare(unsigned char *image, int rowlength, int x, int y, int width
  * for simplicity and .. honestly I don't like antialiased lines that much...
  * Perhaps we can have another function drawAntiAliasedLine.. perhaps.
  */
-int drawLine(unsigned char *image, int rowlength, int x1,int y1, int x2, int y2) {
-  float x = x1;
-  float y = y1;
+int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec* clr) {
 
-  int rangex = x2-x1;
-  int rangey = y2-y1;
-  float resolution = 1000;
+  int x_start, y_start, x_end, y_end;
 
-  while ((int)x < x2 || (int)y < y2) {
-    // x = x + ((float)x1/(float)x2);
-    // y = y + ((float)y1/(float)y2);
-
-    x = x + (float)rangex/resolution;
-    y = y + (float)rangey/resolution;
-
-    unsigned char* pixelpointer = image + ((int)x)*rowlength + ((int)y)*BYTES_PER_PIXEL;
-    *(pixelpointer + 0) = (unsigned char) (255);
-    *(pixelpointer + 1) = (unsigned char) (255);
-    *(pixelpointer + 2) = (unsigned char) (255);
+  if (x1 <= x2) {
+    x_start = x1;
+    x_end = x2;
+    y_start = y1;
+    y_end = y2;
+  } else {
+    x_start = x2;
+    x_end = x1;
+    y_start = y2;
+    y_end = y1;
   }
 
-  unsigned char* pixelpointer = image + ((int)x)*rowlength + ((int)y)*BYTES_PER_PIXEL;
-  *(pixelpointer + 0) = (unsigned char) (255);
-  *(pixelpointer + 1) = (unsigned char) (255);
-  *(pixelpointer + 2) = (unsigned char) (255);
+  int x_range = x_end-x_start;
+  fprintf(stderr,"X_range:%d\n",x_range);
+  int y_range = y_end-y_start;
+  fprintf(stderr,"Y_range:%d\n",y_range);
+
+  int i;
+  float slope = (float)y_range/(float)x_range;
+  if (abs(x_range) > abs(y_range)) {
+    for (i = 0; i < x_range; i++) {
+      int rel_y = (int)roundf(slope * (float)i);
+      plot(cvs,x_start+i,y_start+rel_y,clr);
+    }
+  } else {
+    if (y_range >= 0) {
+      for (i = 0; i < y_range; i++) {
+        int rel_x = (int)roundf((1.0f/slope) * (float)i);
+        plot(cvs,x_start+rel_x,y_start+i,clr);
+      }
+    } else {
+      for (i = 0; i > y_range; i--) {
+        int rel_x = (int)roundf((1.0f/slope) * (float)i);
+        plot(cvs,x_start+rel_x,y_start+i, clr);
+      }
+    }
+  }
 }
+
 
 /**
  * Draw a line with a decided color. Can merge with above function at some point.
@@ -116,25 +153,6 @@ int drawLineConColor(unsigned char *image, int rowlength, int x1,int y1, int x2,
   *(pixelpointer + 0) = (unsigned char) (255);
   *(pixelpointer + 1) = (unsigned char) (255);
   *(pixelpointer + 2) = (unsigned char) (255);
-}
-
-/**
- * Plot a point on the canvas!
- */
-int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
-  if (x >cvs->width-1 || x < 0) {
-    fprintf(stderr,"X coordinate out of range for canvas!\n");
-    return 1;
-  }
-  if (y > cvs->height-1 || y < 0) {
-    fprintf(stderr,"Y coordinate out of range for canvas!\n");
-    return 1;
-  }
-  unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
-                                ((int)x) * BYTES_PER_PIXEL);
-  *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
-  *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
-  *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
 }
 
 /**

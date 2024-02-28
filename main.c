@@ -17,11 +17,12 @@
 #include <stdlib.h>
 #include "shapes.c"
 #include "canvas.h"
+#include "transformations.h"
 
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 100;
+    int height = 200;
     int width = height;
 
     char imageFileName[32];
@@ -57,6 +58,50 @@ int main (int argc, char **argv)
     }
     plot(beall,30,30,blue);
     etchCircle(beall, 50, 50, 10, fuschia);
+
+    drawLine(beall, 29,5,29,189,fuschia);
+
+
+    int r, g, b;
+    float offset = 1;
+
+    /**
+    for (i = -50; i < 50; i++) {
+      int grade = 255/2 + (int)(sin(offset+(float)i/5)*(255/2));
+      struct ColorVec* giggle= initColor(grade,grade,grade);
+      drawLine(beall,20,100+i,180,100-i,giggle);
+    }
+    */
+
+    for (i = 0; i <= width; i++) {
+      r = (int)(((float)i/(float)width) * 155);
+      g = (int)(((float)i/(float)width) * 153);
+      b = (int)(((float)i/(float)width) * 251);
+      struct ColorVec* giggle= initColor(r,g,b);
+      drawLine(beall,i,0,width-i,width,giggle);
+    }
+    for (i = 0; i <= width; i++) {
+      r = (int)(((float)i/(float)width) * 255);
+      g = (int)(((float)i/(float)width) * 243);
+      b = (int)(((float)i/(float)width) * 231);
+      struct ColorVec* giggle= initColor(r,g,b);
+      drawLine(beall,0,i,width,width-i,giggle);
+    }
+
+
+    /**
+    //Sine Wave, dude!
+    for (i = 0; i < beall->width/2; i++) {
+      r = 255/2 + (int)(sin(offset+(float)i/5)*(255/2));
+      g = 255/2 + (int)(sin(offset+(float)i/6)*(255/2));
+      b = 255/2 + (int)(sin(offset+(float)i/7)*(255/2));
+      struct ColorVec* giggle= initColor(r,g,b);
+      // etchCircle(beall, beall->width/2,beall->width/2,i,giggle);
+    }
+    for (i = 0; i < beall->width; i++) {
+      plot(beall,i,beall->width/2+sin((float)i/100)*50,slack_blue);
+    }
+    */
 
 
 
