@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include "ColorVec.h"
+#include "colorvec.h"
 #include <stdlib.h>
 #define BLUE 0
 #define GREEN 1

@@ -15,14 +15,15 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "shapes.c"
+#include "shapes.h"
 #include "canvas.h"
+#include "colorvec.h"
 #include "transformations.c"
 
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 200;
+    int height = 203;
     int width = height;
 
     char imageFileName[32];
@@ -73,7 +74,6 @@ int main (int argc, char **argv)
     }
     */
 
-    /**
     // Joining of four Diamonds
     for (i = 0; i <= width; i++) {
       float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
@@ -83,20 +83,23 @@ int main (int argc, char **argv)
       struct ColorVec* giggle= initColor(r,g,b);
       drawLine(beall,i,0,width-i,width,giggle);
     }
+    /*
     for (i = 0; i <= width; i++) {
       float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
       r = (int)(((float)i/(float)width) * 255);
       g = (int)(((float)i/(float)width) * 243);
       b = (int)(((float)i/(float)width) * 231);
-      r = 255 * shade_fac;
-      g = 243 * shade_fac;
-      b = 231 * shade_fac;
+      r = 155 * shade_fac;
+      g = 193 * shade_fac;
+      b = 1 * shade_fac;
 
       struct ColorVec* giggle= initColor(r,g,b);
-      drawLine(beall,0,i,width,width-i,giggle);
+      drawLine(beall,0,i,width,width-i,slack_blue);
     }
     */
 
+    /*
+    // Idea for diamonded paddurn
     for (i = 0; i < width; i++) {
       for (j = 0; j < width; j++) {
         r = 155 * ((float)(j * i)/(float)(width*width));
@@ -109,6 +112,7 @@ int main (int argc, char **argv)
         drawLine(beall,i,j,
       }
     }
+    */
 
     int x_runner = 0, y_runner = 0;
     int center = width/2;

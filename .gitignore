@@ -3,3 +3,4 @@
 bmp-gen
 *.bmp
 *.jpg
+/obj

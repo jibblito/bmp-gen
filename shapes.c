@@ -5,7 +5,8 @@
  */
 #include <stdio.h>
 #include <math.h>
-#include "ColorVec.h"
+#include <stdlib.h>
+#include "colorvec.h"
 #include "canvas.h"
 
 /**
