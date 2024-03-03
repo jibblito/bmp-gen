@@ -12,10 +12,12 @@
 // Float data, for now.. No reason to expand beyond just yet (float'll do)
 struct TimeSeries {
   int length;
+  float min;
+  float max;
   float *data;
 };
 
-struct TimeSeries *initTimeSeries(int length);
+struct TimeSeries *initTimeSeries(char* file);
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts);
 
 #endif

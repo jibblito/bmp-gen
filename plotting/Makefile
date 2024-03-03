@@ -1,7 +1,7 @@
 all: main
 
 run:
-	./plot-gen
+	./plot-gen sample_series.csv
 
 main: main.c
 	gcc main.c plots.c ../obj/* -g -lm -o plot-gen
