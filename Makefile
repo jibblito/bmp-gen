@@ -13,7 +13,7 @@ canvas: canvas.c
 	gcc canvas.c -c -g -o obj/canvas.o
 
 shapes: shapes.c obj/colorvec.o
-	gcc shapes.c colorvec.o -c -g -lm -o obj/shapes.o
+	gcc shapes.c obj/colorvec.o -c -g -lm -o obj/shapes.o
 
 clean:
 	rm -f bmp-gen
