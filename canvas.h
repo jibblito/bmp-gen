@@ -22,6 +22,6 @@ struct Canvas {
 void generateBitmapImage(struct Canvas *cvs);
 unsigned char* createBitmapFileHeader(int height, int stride);
 unsigned char* createBitmapInfoHeader(int height, int width);
-struct Canvas *initCanvas(int height, int width, char *name);
+struct Canvas *initCanvas(int width, int height, char *name);
 
 #endif

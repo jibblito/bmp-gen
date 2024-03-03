@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "canvas.h"
 
-struct Canvas *initCanvas(int height, int width, char *name) {
+struct Canvas *initCanvas(int width, int height, char *name) {
   struct Canvas *cvs = (struct Canvas*)malloc(sizeof(struct Canvas)); 
   cvs->height = height;
   cvs->width = width;
