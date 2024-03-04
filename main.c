@@ -83,6 +83,9 @@ int main (int argc, char **argv)
       struct ColorVec* giggle= initColor(r,g,b);
       drawLine(beall,i,0,width-i,width,giggle);
     }
+
+    drawRect(beall,30,30,20,20,green);
+
     /*
     for (i = 0; i <= width; i++) {
       float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);

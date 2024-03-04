@@ -55,6 +55,31 @@ int drawSquare(unsigned char *image, int rowlength, int x, int y, int width) {
 }
 
 /**
+ * Draw a rectangle of a set color
+ */
+int drawRect(struct Canvas *cvs, int x1, int y1, int x2, int y2, struct ColorVec* clr) {
+  int x_start, y_start, x_end, y_end;
+
+  if (x1 <= x2) {
+    x_start = x1;
+    x_end = x2;
+    y_start = y1;
+    y_end = y2;
+  } else {
+    x_start = x2;
+    x_end = x1;
+    y_start = y2;
+    y_end = y1;
+  }
+  int i, j;
+  for (i = x_start; i <= x_end; i++) {
+    for (j = y_start; j <= y_end; j++) {
+      plot(cvs,i,j,clr);
+    }
+  }
+}
+
+/**
  * Draw a square of a set gradient!
  *
  * Needs to be improved to support other gradients.
