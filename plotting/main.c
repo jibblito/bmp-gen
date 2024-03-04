@@ -56,19 +56,25 @@ int main (int argc, char** argv) {
   }
 
   // Control Loop: n robots, 
-  int n_iterations = 50;
-  float robot_speed = 0.5;
+  int n_iterations = 250;
+  float robot_speed = 0.11;
   for (i = 0; i < n_robots; i++) {
+    addRtsData(robotarium[i],30,rand() % cvs->width, rand() % cvs->width);
+  }
+  for (i = 0; i < n_robots; i++) {
+    struct RobotTimeSeries *robot = robotarium[i];
+    LOC optimal_charger = chargers[i%n_chargers];
     for(j = 0; j <= n_iterations; j++) {
-      float cur_x = rts->x[rts->length];
-      float cur_y = rts->y[rts->length];
-      float cur_bat = rts->y[rts->length];
-      
+      float cur_x = robot->x[robot->length-1];
+      float cur_y = robot->y[robot->length-1];
+      float cur_bat = robot->y[robot->length-1];
 
-      addRtsData(robotarium[i],30-j,50 + (sinf(((float)j/30)*3.14) * 30), 50-(i*10));
+      float x_vec = (optimal_charger.x - cur_x) * robot_speed;
+      float y_vec = (optimal_charger.y - cur_y) * robot_speed;
 
+      printf("Robo[%d] x: %3.3f, y: %3.3f\n",i, x_vec,y_vec);
 
-
+      addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
     }
   }
   printf("Done generating data\n");
