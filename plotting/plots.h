@@ -20,15 +20,13 @@ struct TimeSeries {
 // Robot Time series: Battery, X, Y for each individual robot
 struct RobotTimeSeries {
   int length;
-  float *battery;
-  float *x;
-  float *y;
+  float *battery, *x, *y;
 };
 
 struct TimeSeries *initTimeSeries(char* file);
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts);
 
 struct RobotTimeSeries *initRobotTimeSeries(char* file);
-void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries **rts, int n_robots);
+void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg);
 
 #endif

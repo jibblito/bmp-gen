@@ -23,13 +23,24 @@ int main (int argc, char** argv) {
 
   // struct TimeSeries *ts = initTimeSeries(argv[1]);
   // // struct TimeSeries *ts2 = initTimeSeries(filename);
-  // // struct Canvas *cvs = initCanvas(ts2->length + 1,(int)(ts2->max - ts2->min),"bin.bmp");
   // // graphTimeSeries(cvs,ts2);
   // // generateBitmapImage(cvs);
   // free(ts);
   //free(cvs);
 
-  printf("Making robot time series\n");
   struct RobotTimeSeries *rts = initRobotTimeSeries("robot_movement.csv");
+  struct Canvas *cvs = initCanvas(100,100,"robot_plot.bmp");
+  printf("main Pointer to rts: %p\n",rts);
+  printf("main Pointer to rts->x: %p\n",rts->x);
+  for (i = 0; i < rts->length; i++) {
+    printf("main rts->battery[%d]: %p (val: %3.3f)\t:\t",i,rts->battery+i,*(rts->battery+i));
+    printf("main rts->x[%d]: %p (val: %3.3f)\t:\t",i,rts->x+i,*(rts->x+i));
+    printf("main rts->y[%d]: %p (val: %3.3f)\n",i,rts->y+i,*(rts->y+i));
+  }
+
+
+  graphRobotTimeSeries(cvs,rts,1);
+
+  generateBitmapImage(cvs);
   free(rts);
 }
