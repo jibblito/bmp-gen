@@ -62,3 +62,45 @@ void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
 
 }
 
+struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
+  int file = open(data_file, O_RDONLY);
+
+  if (file == -1) {
+    printf("open() failed: errno %d: %s\n",errno,strerror(errno));
+    return NULL;
+  }
+
+  char buf[BUF_SIZE];
+  read(file,buf,BUF_SIZE);
+
+  struct RobotTimeSeries *rts = malloc(sizeof(struct RobotTimeSeries) +
+                                       sizeof(float) * MAX_TS_SIZE * 3); // 3 float series: battery, x, y
+  // Three data set pointers, each equi-sized
+  rts->battery = (float*) rts + sizeof(struct RobotTimeSeries);
+  rts->x = (float*) rts->battery + sizeof(float) * MAX_TS_SIZE;
+  rts->y = (float*) rts->x + sizeof(float) * MAX_TS_SIZE;
+
+  printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y);
+
+  char *saveptr1, *saveptr2;
+  int length = 0;
+  char* token = strtok_r(buf,"\n",&saveptr1);
+  char *series_label = strtok_r(NULL,"\n",&saveptr1); // First line of file (csv header)
+ 
+  // Read major token for each time step
+  while ((token = strtok_r(NULL,"\n",&saveptr1)) != NULL) {
+    // Read Subtoken inside each time step
+    char *subtoken = token;
+    float battery = atof(strtok_r(subtoken,",",&saveptr2));
+    float x = atof(strtok_r(NULL,",",&saveptr2));
+    float y = atof(strtok_r(NULL,",",&saveptr2));
+
+    rts->battery[length] = battery;
+    rts->x[length] = x;
+    rts->y[length] = y;
+    length++;
+  }
+  rts->length = length;
+  return rts;
+}
+

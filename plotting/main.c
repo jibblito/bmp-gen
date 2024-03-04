@@ -11,7 +11,7 @@ int main (int argc, char** argv) {
   }
 
   char* filename = "shanahan.csv";
-  int file = open(filename,O_CREAT| O_WRONLY | O_TRUNC,);
+  int file = open(filename,O_CREAT| O_WRONLY | O_TRUNC);
   // CHANGE PERMS ON SHANAHAN CSV TODO!!!
 
   int i;
@@ -22,10 +22,14 @@ int main (int argc, char** argv) {
   close(file);
 
   // struct TimeSeries *ts = initTimeSeries(argv[1]);
-  struct TimeSeries *ts2 = initTimeSeries(filename);
-  struct Canvas *cvs = initCanvas(ts2->length + 1,(int)(ts2->max - ts2->min),"bin.bmp");
-  graphTimeSeries(cvs,ts2);
-  generateBitmapImage(cvs);
+  // // struct TimeSeries *ts2 = initTimeSeries(filename);
+  // // struct Canvas *cvs = initCanvas(ts2->length + 1,(int)(ts2->max - ts2->min),"bin.bmp");
+  // // graphTimeSeries(cvs,ts2);
+  // // generateBitmapImage(cvs);
   // free(ts);
-  free(cvs);
+  //free(cvs);
+
+  printf("Making robot time series\n");
+  struct RobotTimeSeries *rts = initRobotTimeSeries("robot_movement.csv");
+  free(rts);
 }
