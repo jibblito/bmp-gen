@@ -49,44 +49,59 @@ struct TimeSeries *initTimeSeries (char* data_file) {
 }
 
 struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
-  int file = open(data_file, O_RDONLY);
-
-  if (file == -1) {
-    printf("open() failed: errno %d: %s\n",errno,strerror(errno));
-    return NULL;
-  }
-
-  char buf[BUF_SIZE];
-  read(file,buf,BUF_SIZE);
 
   struct RobotTimeSeries *rts = malloc(sizeof(struct RobotTimeSeries) +
                                        sizeof(float) * MAX_TS_SIZE * 3); // 3 float series: battery, x, y
+
   // Three data set pointers, each equi-sized
   rts->battery = (float*) (rts + sizeof(struct RobotTimeSeries));
   rts->x = rts->battery + MAX_TS_SIZE;
   rts->y = rts->x + MAX_TS_SIZE;
 
-  printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y);
+  // printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y); // debug
 
-  char *saveptr1, *saveptr2;
   int length = 0;
-  char* token = strtok_r(buf,"\n",&saveptr1);
-  char *series_labels = token; // CSV header
- 
-  // Read major token for each time step
-  while ((token = strtok_r(NULL,"\n",&saveptr1)) != NULL) {
-    // Read Subtoken inside each time step
-    float battery = atof(strtok_r(token,",",&saveptr2));
-    float x = atof(strtok_r(NULL,",",&saveptr2));
-    float y = atof(strtok_r(NULL,",",&saveptr2));
 
-    rts->battery[length] = battery;
-    rts->x[length] = x;
-    rts->y[length] = y;
-    length++;
+  if (data_file != NULL) {
+    int file = open(data_file, O_RDONLY);
+    if (file == -1) {
+      printf("open() failed: errno %d: %s\n",errno,strerror(errno));
+      return NULL;
+    }
+
+    char buf[BUF_SIZE];
+    char *saveptr1, *saveptr2;
+    char* token = strtok_r(buf,"\n",&saveptr1);
+    char *series_labels = token; // CSV header
+   
+    read(file,buf,BUF_SIZE);
+    // Read major token for each time step
+    while ((token = strtok_r(NULL,"\n",&saveptr1)) != NULL) {
+      // Read Subtoken inside each time step
+      float battery = atof(strtok_r(token,",",&saveptr2));
+      float x = atof(strtok_r(NULL,",",&saveptr2));
+      float y = atof(strtok_r(NULL,",",&saveptr2));
+
+      rts->battery[length] = battery;
+      rts->x[length] = x;
+      rts->y[length] = y;
+      length++;
+    }
   }
   rts->length = length;
   return rts;
+}
+
+// add a RTS triplet to a data struct
+int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
+  if (rts->length == MAX_TS_SIZE) {
+    printf("Time series exceeds MAX_TS_SIZE\n");
+    return 12;
+  }
+  rts->battery[rts->length] = bat;
+  rts->x[rts->length] = x;
+  rts->y[rts->length] = y;
+  rts->length = rts->length + 1;
 }
 
 
@@ -123,14 +138,8 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int d
 
   int i;
   for (i = 0; i < rts->length; i++) {
-    printf("func rts->battery[%d]: %p (val: %3.3f)\t:\t",i,rts->battery+i,*(rts->battery+i));
-    printf("func rts->x[%d]: %p (val: %3.3f)\t:\t",i,rts->x+i,*(rts->x+i));
-    printf("func rts->y[%d]: %p (val: %3.3f)\n",i,rts->y+i,*(rts->y+i));
+    printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
+    etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
   }
-
-  // for (i = 0; i < rts->length; i++) {
-  //   printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
-  //   // etchCircle(cvs,(int)rts->x[0],(int)rts->y[0],3,fn_clr);
-  // }
 }
 

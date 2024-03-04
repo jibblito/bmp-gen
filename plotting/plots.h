@@ -27,6 +27,7 @@ struct TimeSeries *initTimeSeries(char* file);
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts);
 
 struct RobotTimeSeries *initRobotTimeSeries(char* file);
+int addRtsData(struct RobotTimeSeries *rts, float bat, float x, float y);
 void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg);
 
 #endif

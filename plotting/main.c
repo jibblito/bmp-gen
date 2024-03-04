@@ -27,20 +27,29 @@ int main (int argc, char** argv) {
   // // generateBitmapImage(cvs);
   // free(ts);
   //free(cvs);
+  
+  int n_robots = 3;
+  // Initialise pointers
+  struct RobotTimeSeries **robotarium = malloc(sizeof(struct RobotTimeSeries *) * n_robots);
+
+  for (i = 0; i < n_robots; i++) {
+    robotarium[i] = initRobotTimeSeries(NULL);
+    printf("Len[%d]: %d\n",i,robotarium[i]->length);
+  }
+
+  
+
+  
+
 
   struct RobotTimeSeries *rts = initRobotTimeSeries("robot_movement.csv");
   struct Canvas *cvs = initCanvas(100,100,"robot_plot.bmp");
   printf("main Pointer to rts: %p\n",rts);
   printf("main Pointer to rts->x: %p\n",rts->x);
-  for (i = 0; i < rts->length; i++) {
-    printf("main rts->battery[%d]: %p (val: %3.3f)\t:\t",i,rts->battery+i,*(rts->battery+i));
-    printf("main rts->x[%d]: %p (val: %3.3f)\t:\t",i,rts->x+i,*(rts->x+i));
-    printf("main rts->y[%d]: %p (val: %3.3f)\n",i,rts->y+i,*(rts->y+i));
-  }
 
+  //graphRobotTimeSeries(cvs,rts,1);
 
-  graphRobotTimeSeries(cvs,rts,1);
-
-  generateBitmapImage(cvs);
+  //generateBitmapImage(cvs);
   free(rts);
+  free(robotarium);
 }
