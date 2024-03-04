@@ -122,9 +122,7 @@ void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
 
 
 // Graph a robot time series
-void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg) {
-
-  struct ColorVec *fn_clr = initColor(255,0,0);
+void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr) {
   if (draw_bg == 1) {
     struct ColorVec *bg_clr = initColor(255,255,255);
     struct ColorVec *axis_clr = initColor(0,0,0);
@@ -138,7 +136,7 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int d
 
   int i;
   for (i = 0; i < rts->length; i++) {
-    printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
+    // printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
     etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
   }
 }

@@ -8,6 +8,7 @@
  */
 
 #include "../canvas.h"
+#include "../colorvec.h"
 
 // Float data, for now.. No reason to expand beyond just yet (float'll do)
 struct TimeSeries {
@@ -28,6 +29,6 @@ void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts);
 
 struct RobotTimeSeries *initRobotTimeSeries(char* file);
 int addRtsData(struct RobotTimeSeries *rts, float bat, float x, float y);
-void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg);
+void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr);
 
 #endif
