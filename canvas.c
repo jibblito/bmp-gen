@@ -79,17 +79,17 @@ unsigned char* createBitmapFileHeader(int height, int stride) {
 unsigned char* createBitmapInfoHeader (int height, int width)
 {
     static unsigned char infoHeader[] = {
-        0,0,0,0, /// header size
-        0,0,0,0, /// image width
-        0,0,0,0, /// image height
-        0,0,     /// number of color planes
-        0,0,     /// bits per pixel
-        0,0,0,0, /// compression
-        0,0,0,0, /// image size
-        0,0,0,0, /// horizontal resolution
-        0,0,0,0, /// vertical resolution
-        0,0,0,0, /// colors in color table
-        0,0,0,0, /// important color count
+        0,0,0,0, /// header size               [0 - 3]
+        0,0,0,0, /// image width               [4 - 7]
+        0,0,0,0, /// image height              [8 -11]
+        0,0,     /// number of color planes    [12-13]
+        0,0,     /// bits per pixel            [14-15]
+        0,0,0,0, /// compression               [16-19]
+        0,0,0,0, /// image size                [20-23]
+        0,0,0,0, /// horizontal resolution     [24-27]
+        0,0,0,0, /// vertical resolution       [28-31]
+        0,0,0,0, /// colors in color table     [31-35]
+        0,0,0,0, /// important color count     [36-39]
     };
 
     infoHeader[ 0] = (unsigned char)(INFO_HEADER_SIZE);

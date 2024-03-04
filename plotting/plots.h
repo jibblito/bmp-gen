@@ -10,6 +10,8 @@
 #include "../canvas.h"
 #include "../colorvec.h"
 
+#define MAX_TS_SIZE 512
+
 // Float data, for now.. No reason to expand beyond just yet (float'll do)
 struct TimeSeries {
   int length;

@@ -8,9 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#define MAX_FILE_SIZE 2048
 #define BUF_SIZE 2048
-#define MAX_TS_SIZE 512
 
 struct TimeSeries *initTimeSeries (char* data_file) {
   int file = open(data_file, O_RDONLY);
@@ -55,8 +53,8 @@ struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
 
   // Three data set pointers, each equi-sized
   rts->battery = (float*) (rts + sizeof(struct RobotTimeSeries));
-  rts->x = rts->battery + MAX_TS_SIZE;
-  rts->y = rts->x + MAX_TS_SIZE;
+  rts->x = rts->battery + sizeof(float)*MAX_TS_SIZE;
+  rts->y = rts->x + sizeof(float)*MAX_TS_SIZE;
 
   // printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y); // debug
 
@@ -102,6 +100,7 @@ int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
   rts->x[rts->length] = x;
   rts->y[rts->length] = y;
   rts->length = rts->length + 1;
+  return rts->length;
 }
 
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
@@ -140,3 +139,21 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int d
   }
 }
 
+// Graph a robot time series (single-frame)
+void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame) {
+  if (draw_bg == 1) {
+    struct ColorVec *bg_clr = initColor(255,255,255);
+    struct ColorVec *axis_clr = initColor(0,0,0);
+
+    drawRect(cvs,0,0,cvs->width-1,cvs->height-1,bg_clr);
+    drawLine(cvs,0,0,0,cvs->height,axis_clr);
+    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,axis_clr);
+    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,axis_clr);
+    drawLine(cvs,cvs->width-1,0,0,0,axis_clr);
+  }
+
+  int i;
+  for (i = 0; i < rts->length; i++) {
+    etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
+  }
+}
