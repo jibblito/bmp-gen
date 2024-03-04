@@ -62,9 +62,9 @@ struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
   struct RobotTimeSeries *rts = malloc(sizeof(struct RobotTimeSeries) +
                                        sizeof(float) * MAX_TS_SIZE * 3); // 3 float series: battery, x, y
   // Three data set pointers, each equi-sized
-  rts->x = (float*) (rts + sizeof(struct RobotTimeSeries));
-  rts->battery = (float*) (rts->x + sizeof(float) * MAX_TS_SIZE);
-  rts->y = (float*) (rts->battery + sizeof(float) * MAX_TS_SIZE);
+  rts->battery = (float*) (rts + sizeof(struct RobotTimeSeries));
+  rts->x = rts->battery + MAX_TS_SIZE;
+  rts->y = rts->x + MAX_TS_SIZE;
 
   printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y);
 
