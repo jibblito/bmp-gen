@@ -104,7 +104,6 @@ int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
   rts->length = rts->length + 1;
 }
 
-
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
   struct ColorVec *bg_clr = initColor(255,255,255);
   struct ColorVec *axis_clr = initColor(0,0,0);

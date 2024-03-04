@@ -1,4 +1,5 @@
 #include "plots.h"
+#include "../shapes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -32,17 +33,43 @@ int main (int argc, char** argv) {
   int n_robots = 6;
   // Initialise pointers
   struct RobotTimeSeries **robotarium = malloc(sizeof(struct RobotTimeSeries *) * n_robots);
+  struct Canvas *cvs = initCanvas(100,100,"robotarium.bmp");
 
   for (i = 0; i < n_robots; i++) {
     robotarium[i] = initRobotTimeSeries(NULL);
     printf("Len[%d]: %d\n",i,robotarium[i]->length);
   }
 
+  typedef struct location {
+    float x,y;
+  } LOC;
+
+
+  int n_chargers = 4;
+  LOC *chargers = malloc(sizeof(LOC) * n_chargers);
+
+  int frac = cvs->height/n_chargers;
+  int offset = frac/2;
+  for (i = 0; i < n_chargers; i++) {
+    chargers[i].x = 0;
+    chargers[i].y = i*frac + offset;
+  }
+
+  // Control Loop: n robots, 
+  int n_iterations = 50;
+  float robot_speed = 0.5;
   for (i = 0; i < n_robots; i++) {
-    for(j = 0; j <= 30; j++) {
+    for(j = 0; j <= n_iterations; j++) {
+      float cur_x = rts->x[rts->length];
+      float cur_y = rts->y[rts->length];
+      float cur_bat = rts->y[rts->length];
+      
+
       addRtsData(robotarium[i],30-j,50 + (sinf(((float)j/30)*3.14) * 30), 50-(i*10));
+
+
+
     }
-    printf("Len[%d]: %d\n",i,robotarium[i]->length);
   }
   printf("Done generating data\n");
 
@@ -52,13 +79,18 @@ int main (int argc, char** argv) {
       initColor(30,255,123), initColor(150,200,200),
       initColor(66,59,201), initColor(200,100,110),
     };
-  struct Canvas *cvs = initCanvas(100,100,"robotarium.bmp");
   for (i = 0; i < n_robots; i++) {
     if (i == 0) {
       graphRobotTimeSeries(cvs,robotarium[i],1,robot_colors[i]);
     } else {
       graphRobotTimeSeries(cvs,robotarium[i],0,robot_colors[i]);
     }
+  }
+  struct ColorVec *charger_clr = initColor(230,210,10);
+  for (i = 0; i < n_chargers; i++) {
+    LOC l = chargers[i];
+    printf("l%d: (%d,%d)\n",i,l.x,l.y);
+    drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
   }
   generateBitmapImage(cvs);
 
