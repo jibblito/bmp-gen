@@ -119,6 +119,7 @@ void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
 
 
 
+
 // Graph a robot time series
 void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr) {
   if (draw_bg == 1) {
@@ -135,25 +136,12 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int d
   int i;
   for (i = 0; i < rts->length; i++) {
     // printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
+  printf("frame: %d\n",i);
     etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
   }
 }
 
 // Graph a robot time series (single-frame)
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame) {
-  if (draw_bg == 1) {
-    struct ColorVec *bg_clr = initColor(255,255,255);
-    struct ColorVec *axis_clr = initColor(0,0,0);
-
-    drawRect(cvs,0,0,cvs->width-1,cvs->height-1,bg_clr);
-    drawLine(cvs,0,0,0,cvs->height,axis_clr);
-    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,axis_clr);
-    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,axis_clr);
-    drawLine(cvs,cvs->width-1,0,0,0,axis_clr);
-  }
-
-  int i;
-  for (i = 0; i < rts->length; i++) {
-    etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
-  }
+  etchCircle(cvs,(int)rts->x[frame],(int)rts->y[frame],3,fn_clr);
 }

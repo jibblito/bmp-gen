@@ -13,12 +13,12 @@ int main (int argc, char** argv) {
   // }
   
   // Limit of 10 for now
-  int n_robots = 10;
-  int max_battery = 30;
+  int n_robots = 7;
+  int max_battery = 50;
   int i,j,k,l;
 
   // Initialise pointers
-  struct RobotTimeSeries *robotarium[10];
+  struct RobotTimeSeries **robotarium = malloc(sizeof(int *) * 10);
   struct Canvas *cvs = initCanvas(100,100,"robotarium.bmp");
 
   for (i = 0; i < n_robots; i++) {
@@ -47,8 +47,8 @@ int main (int argc, char** argv) {
     addRtsData(robotarium[i],max_battery,rand() % cvs->width, rand() % cvs->width);
   }
 
-  int n_iterations = 200;
-  float robot_speed = 0.5;
+  int n_iterations = 2;
+  float robot_speed = 0.1;
   float resolution = 0.1;
   int weights_x[10] = {0};
   int weights_y[10] = {0};
@@ -105,43 +105,36 @@ int main (int argc, char** argv) {
       float cur_y = robot->y[(robot->length)-1];
       float cur_bat = robot->battery[(robot->length)-1];
     
-      float battery_weight = (float)cur_bat / (float)max_battery;
+      float battery_weight, coverage_weight;
 
-      x_vec = (optimal_charger.x - cur_x) * robot_speed;
-      y_vec = (optimal_charger.y - cur_y) * robot_speed;
+      if (cur_bat < 10) {
+        battery_weight = 1;
+        coverage_weight = 0;
+      } else {
+        battery_weight = ((float)cur_bat/(float)max_battery) * 0.5;
+        coverage_weight = 1-battery_weight;
+      }
+      battery_weight = 0;
+      coverage_weight = 1;
 
-      x_vec = (centroid.x - cur_x) * robot_speed;
-      y_vec = (centroid.y - cur_y) * robot_speed;
+      x_vec = (optimal_charger.x - cur_x) * battery_weight;
+      y_vec = (optimal_charger.y - cur_y) * battery_weight;
+
+      x_vec += (centroid.x - cur_x) * coverage_weight;
+      y_vec += (centroid.y - cur_y) * coverage_weight;
+
+      x_vec *= robot_speed;
+      y_vec *= robot_speed;
 
       printf("Robo_loc[%d] x: %3.3f, y: %3.3f\n",j, cur_x,cur_y);
       printf("Robo_vec[%d] x: %3.3f, y: %3.3f\n",j, x_vec,y_vec);
       printf("Robo[%d] centroid: (%3.3f,%3.3f)\n",j,centroids[j].x,centroids[j].y);
 
       addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
-
-      printf("robot datta lengthafttercall: %d\n",robot->length);
     }
   }
-
-  // Control Loop
-  /**
-  for (i = 0; i < n_robots; i++) {
-    struct RobotTimeSeries *robot = robotarium[i];
-    LOC optimal_charger = chargers[i%n_chargers];
-    for(j = 0; j <= n_iterations; j++) {
-      float cur_x = robot->x[robot->length-1];
-      float cur_y = robot->y[robot->length-1];
-      float cur_bat = robot->y[robot->length-1];
-
-      float x_vec = (optimal_charger.x - cur_x) * robot_speed;
-      float y_vec = (optimal_charger.y - cur_y) * robot_speed;
-
-      printf("Robo[%d] x: %3.3f, y: %3.3f\n",j, x_vec,y_vec);
-
-      addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
-    }
-  }*/
   printf("Done generating data\n");
+
 
   struct ColorVec *robot_colors[10] = 
     {
@@ -152,6 +145,18 @@ int main (int argc, char** argv) {
       initColor(80,120,101), initColor(255,100,100),
     };
 
+  struct ColorVec *charger_clr = initColor(230,210,10);
+
+
+  printf("\bGO 1\n\n");
+  for (i = 0; i < robotarium[0]->length; i++) {
+    for (j = 0; j < n_robots; j++) {
+
+      printf("(%f,%f)\n",robotarium[j]->x[i],robotarium[j]->y[i]);
+    }
+  }
+
+
   // Generate frames of animation
   for (i = 0; i < n_robots; i++) {
     if (i == 0) {
@@ -159,44 +164,57 @@ int main (int argc, char** argv) {
     } else {
       graphRobotTimeSeries(cvs,robotarium[i],0,robot_colors[i]);
     }
+    etchCircle(cvs,robotarium[i]->x[0],robotarium[i]->y[0],3,charger_clr);
   }
-  struct ColorVec *charger_clr = initColor(230,210,10);
   for (i = 0; i < n_chargers; i++) {
     LOC l = chargers[i];
-    printf("l%d: (%d,%d)\n",i,l.x,l.y);
-    drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
+    // drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
   }
-  generateBitmapImage(cvs);
-  free(cvs);
+  // generateBitmapImage(cvs);
 
-  struct ColorVec *charger_clr = initColor(230,210,10);
-  for (i = 0; i < n_iterations; i++) {
-    char *filename;
-    sprintf(filename,"out/frame%d.bmp\0",i);
-    cvs = initCanvas(100,100,filename);
+
+
+
+  printf("\nStarting bmp generation loop\n\n");
+  struct ColorVec *bg_clr = initColor(255,255,255);
+  struct ColorVec *axis_clr = initColor(0,0,0);
+
+  for (i = 0; i < robotarium[0]->length; i++) {
+
+     char filename[32];
+     sprintf(filename,"out/00%d.bmp\0",i);
+     if (i > 9) sprintf(filename,"out/0%d.bmp\0",i);
+     if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
+     cvs = initCanvas(100,100,filename);
+
+     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,bg_clr);
+     drawLine(cvs,0,0,0,cvs->height,axis_clr);
+     drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,axis_clr);
+     drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,axis_clr);
+     drawLine(cvs,cvs->width-1,0,0,0,axis_clr);
+
     for (j = 0; j < n_robots; j++) {
-      if (j == 0) {
-        graphRobotTimeSeries(cvs,robotarium[j],1,robot_colors[j]);
-      } else {
-        graphRobotTimeSeries(cvs,robotarium[j],0,robot_colors[j]);
-      }
+      graphRobotTimeSeriesFrame(cvs,robotarium[j],0,robot_colors[j],i);
     }
+
     for (j = 0; j < n_chargers; j++) {
       LOC l = chargers[j];
-      drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
+      //drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
     }
-    generateBitmapImage(cvs);
+
+    // generateBitmapImage(cvs);
   }
 
+  printf("\bGO 3\n\n");
+  for (i = 0; i < robotarium[0]->length; i++) {
+    for (j = 0; j < n_robots; j++) {
+      printf("(%f,%f)\n",robotarium[j]->x[i],robotarium[j]->y[i]);
+    }
+  }
 
-  struct RobotTimeSeries *rts = initRobotTimeSeries("robot_movement.csv");
-  printf("main Pointer to rts: %p\n",rts);
-  printf("main Pointer to rts->x: %p\n",rts->x);
-  free(rts);
-
-  //graphRobotTimeSeries(cvs,rts,1);
   for (i = 0; i < n_robots; i++) {
     free(robotarium[i]);
   }
 
+  free(cvs);
 }
