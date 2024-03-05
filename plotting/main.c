@@ -13,7 +13,7 @@ int main (int argc, char** argv) {
   // }
   
   // Limit of 10 for now
-  int n_robots = 7;
+  int n_robots = 3;
   int max_battery = 50;
   int i,j,k,l;
 
@@ -47,7 +47,7 @@ int main (int argc, char** argv) {
     addRtsData(robotarium[i],max_battery,rand() % cvs->width, rand() % cvs->width);
   }
 
-  int n_iterations = 2;
+  int n_iterations = 100;
   float robot_speed = 0.1;
   float resolution = 0.1;
   int weights_x[10] = {0};
@@ -157,6 +157,8 @@ int main (int argc, char** argv) {
   }
 
 
+  struct ColorVec *finish_clr = initColor(70,50,130);
+
   // Generate frames of animation
   for (i = 0; i < n_robots; i++) {
     if (i == 0) {
@@ -165,13 +167,15 @@ int main (int argc, char** argv) {
       graphRobotTimeSeries(cvs,robotarium[i],0,robot_colors[i]);
     }
     etchCircle(cvs,robotarium[i]->x[0],robotarium[i]->y[0],3,charger_clr);
+    etchCircle(cvs,robotarium[i]->x[robotarium[0]->length-1],robotarium[i]->y[robotarium[0]->length-1],3,finish_clr);
   }
   for (i = 0; i < n_chargers; i++) {
     LOC l = chargers[i];
     // drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
   }
-  // generateBitmapImage(cvs);
+  generateBitmapImage(cvs);
 
+  return 0;
 
 
 
