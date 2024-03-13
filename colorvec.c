@@ -40,9 +40,17 @@ struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree)
     ret.g = degree * (float)cvg->gradient[0].g + (1-degree) * (float)cvg->gradient[1].g;
     ret.b = degree * (float)cvg->gradient[0].b + (1-degree) * (float)cvg->gradient[1].b;
   } else if (cvg->n_colors == 3) {
-    ret.r = degree * (float)cvg->gradient[0].r + (1-degree) * (float)cvg->gradient[1].r;
-    ret.g = degree * (float)cvg->gradient[0].g + (1-degree) * (float)cvg->gradient[1].g;
-    ret.b = degree * (float)cvg->gradient[0].b + (1-degree) * (float)cvg->gradient[1].b;
+    degree = degree * 2;
+    if (degree < 1.0f) {
+      ret.r = degree * (float)cvg->gradient[1].r + (1-degree) * (float)cvg->gradient[0].r;
+      ret.g = degree * (float)cvg->gradient[1].g + (1-degree) * (float)cvg->gradient[0].g;
+      ret.b = degree * (float)cvg->gradient[1].b + (1-degree) * (float)cvg->gradient[0].b;
+    } else {
+      degree = degree - 1;
+      ret.r = degree * (float)cvg->gradient[2].r + (1-degree) * (float)cvg->gradient[1].r;
+      ret.g = degree * (float)cvg->gradient[2].g + (1-degree) * (float)cvg->gradient[1].g;
+      ret.b = degree * (float)cvg->gradient[2].b + (1-degree) * (float)cvg->gradient[1].b;
+    }
   }
   return ret;
 }

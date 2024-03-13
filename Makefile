@@ -1,4 +1,4 @@
-all: main2
+all: main
 
 run:
 	./bmp-gen y

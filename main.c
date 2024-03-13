@@ -165,6 +165,17 @@ int main (int argc, char **argv)
     // drawLine(image,rowlength,0,50,200,200);
     // drawLineConColor(image,rowlength,200,200,300,100,blue);
     
+    struct ColorVecGradient grnRedBlu;
+    grnRedBlu.n_colors = 0;
+    addColorToColorVecGradient(&grnRedBlu,&green);
+    addColorToColorVecGradient(&grnRedBlu,&red);
+    addColorToColorVecGradient(&grnRedBlu,&blue);
+
+    for (i = 0; i < beall->width; i++) {
+      struct ColorVec clr = getColorFromGradient(&grnRedBlu,(float)i/(float)beall->width);
+      drawLine(beall,i,10,i,60,&clr);
+    }
+    
     generateBitmapImage(beall);
     printf("Image generated!!\n");
     free(beall);

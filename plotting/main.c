@@ -10,7 +10,7 @@ int main (int argc, char** argv) {
   
   // Limit of 10 for now
   int n_robots = 6;
-  int max_battery = 50;
+  int max_battery = 100;
   int i,j,k,l;
 
   // Initialise pointers
@@ -30,7 +30,12 @@ int main (int argc, char** argv) {
   LOC *chargers = malloc(sizeof(LOC) * n_chargers);
   int frac = cvs->height/(n_chargers/2);
   int offset = frac/2;
-  for (i = 0; i < n_chargers; i++) {
+  for (i = 0; i < 2; i++) {
+    if (i%2==0) chargers[i].y = 0;
+    else chargers[i].y = cvs->height-1;
+    chargers[i].x = cvs->width/2;
+  }
+  for (;i<n_chargers;i++) {
     if (i%2==0) chargers[i].x = 0;
     else chargers[i].x = cvs->width-1;
     chargers[i].y = (i/2)*frac + offset;
@@ -42,8 +47,8 @@ int main (int argc, char** argv) {
     addRtsData(robotarium[i],max_battery,chargers[i].x,chargers[i].y);
   }
 
-  int n_iterations = 500;
-  float robot_speed = 0.1;
+  int n_iterations = 200;
+  float robot_speed = 0.2;
   float resolution = 0.1;
   int weights_x[10] = {0};
   int weights_y[10] = {0};
@@ -101,7 +106,7 @@ int main (int argc, char** argv) {
     
       float battery_weight, coverage_weight;
 
-      if (cur_bat < 10) {
+      if (cur_bat < 20) {
         battery_weight = 1;
         coverage_weight = 0;
       } else {
@@ -110,8 +115,9 @@ int main (int argc, char** argv) {
         battery_weight = 0;
         coverage_weight = 1;
       }
-      // battery_weight = 0;
-      // coverage_weight = 1;
+
+      // float dist_to_charger_x = optimal_charger.x-cur_x;
+      // float dist_to_charger_y = optimal_charger.x-cur_y;
 
       x_vec = (optimal_charger.x - cur_x) * battery_weight;
       y_vec = (optimal_charger.y - cur_y) * battery_weight;
@@ -183,6 +189,20 @@ int main (int argc, char** argv) {
   addColorToColorVecGradient(&greenToRed,&green);
   addColorToColorVecGradient(&greenToRed,&red);
 
+  struct ColorVec teal,blue,darkBlue;
+  initColor(&teal,0,255,240);
+  initColor(&blue,0,3,255);
+  initColor(&darkBlue,0,2,55);
+  struct ColorVecGradient infoGradient;
+  infoGradient.n_colors = 0;
+  addColorToColorVecGradient(&infoGradient,&teal);
+  addColorToColorVecGradient(&infoGradient,&blue);
+  addColorToColorVecGradient(&infoGradient,&darkBlue);
+  struct ColorVecGradient yelRedBlu;
+  yelRedBlu.n_colors = 0;
+  addColorToColorVecGradient(&yelRedBlu,&red);
+  addColorToColorVecGradient(&yelRedBlu,&blue);
+
   for (i = 0; i < robotarium[0]->length; i++) {
 
      char filename[32];
@@ -191,7 +211,10 @@ int main (int argc, char** argv) {
      if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
      cvs = initCanvas(100,100,filename);
 
-     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
+     struct ColorVec time_passage = getColorFromGradient(&infoGradient,(float)i/(float)n_iterations);
+
+//     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
+     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&time_passage);
      drawLine(cvs,0,0,0,cvs->height,&axis_clr);
      drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
      drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
