@@ -3,6 +3,8 @@ all: main2
 run:
 	./bmp-gen y
 
+objects: colorvec canvas shapes
+
 main: main.c obj/colorvec.o obj/shapes.o obj/canvas.o
 	gcc obj/* main.c -g -lm -o bmp-gen
 

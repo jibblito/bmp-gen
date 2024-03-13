@@ -9,7 +9,7 @@
 int main (int argc, char** argv) {
   
   // Limit of 10 for now
-  int n_robots = 5;
+  int n_robots = 6;
   int max_battery = 50;
   int i,j,k,l;
 
@@ -25,24 +25,24 @@ int main (int argc, char** argv) {
     float x,y;
   } LOC;
 
-
   // Prepare charger locations
-  int n_chargers = 4;
+  int n_chargers = n_robots;
   LOC *chargers = malloc(sizeof(LOC) * n_chargers);
-  int frac = cvs->height/n_chargers;
+  int frac = cvs->height/(n_chargers/2);
   int offset = frac/2;
   for (i = 0; i < n_chargers; i++) {
-    chargers[i].x = 0;
-    chargers[i].y = i*frac + offset;
+    if (i%2==0) chargers[i].x = 0;
+    else chargers[i].x = cvs->width-1;
+    chargers[i].y = (i/2)*frac + offset;
   }
 
 
   // Prepare time series data sheets for robot locations
   for (i = 0; i < n_robots; i++) {
-    addRtsData(robotarium[i],max_battery,rand() % cvs->width, rand() % cvs->width);
+    addRtsData(robotarium[i],max_battery,chargers[i].x,chargers[i].y);
   }
 
-  int n_iterations = 10;
+  int n_iterations = 500;
   float robot_speed = 0.1;
   float resolution = 0.1;
   int weights_x[10] = {0};
@@ -105,8 +105,10 @@ int main (int argc, char** argv) {
         battery_weight = 1;
         coverage_weight = 0;
       } else {
-        battery_weight = ((float)cur_bat/(float)max_battery) * 0.5;
-        coverage_weight = 1-battery_weight;
+        // battery_weight = ((float)cur_bat/(float)max_battery) * 0.5;
+        // coverage_weight = 1-battery_weight;
+        battery_weight = 0;
+        coverage_weight = 1;
       }
       // battery_weight = 0;
       // coverage_weight = 1;
@@ -142,17 +144,6 @@ int main (int argc, char** argv) {
   initColor(&charger_clr,230,210,10);
   initColor(&finish_clr,70,50,130);
 
-
-  printf("\bGO 1\n\n");
-  for (i = 0; i < robotarium[0]->length; i++) {
-    for (j = 0; j < n_robots; j++) {
-
-      printf("(%f,%f)\n",robotarium[j]->x[i],robotarium[j]->y[i]);
-    }
-  }
-
-
-
   // Generate frames of animation
   for (i = 0; i < n_robots; i++) {
     if (i == 0) {
@@ -165,9 +156,18 @@ int main (int argc, char** argv) {
   }
   for (i = 0; i < n_chargers; i++) {
     LOC l = chargers[i];
-    // drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
+    drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,&charger_clr);
   }
   generateBitmapImage(cvs);
+
+//  // END EARLY
+//   for (i = 0; i < n_robots; i++) {
+//     free(robotarium[i]);
+//   }
+//   free(cvs);
+//   free(chargers);
+//   return 0;
+//   // END EARLY
 
 
   printf("\nStarting bmp generation loop\n\n");
@@ -195,16 +195,9 @@ int main (int argc, char** argv) {
 
     for (j = 0; j < n_chargers; j++) {
       LOC l = chargers[j];
-      //drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
+      drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,&charger_clr);
     }
     generateBitmapImage(cvs);
-  }
-
-  printf("\bGO 3\n\n");
-  for (i = 0; i < robotarium[0]->length; i++) {
-    for (j = 0; j < n_robots; j++) {
-      printf("(%f,%f)\n",robotarium[j]->x[i],robotarium[j]->y[i]);
-    }
   }
 
   // ENDY EARLY

@@ -1,0 +1,13 @@
+To compile (robotics demonstration):
+
+`make objects` in base directory
+`cd plotting`
+`make`
+`make run`: Warning - generates ~3.0 Mb of uncompressed images in the `out` directory.
+
+I have commented out the code that generates such large amount of files, to protect the end-user.
+
+==== ROBOTARIUM ====
+Relevant code for running ROBOTARIUM is in plotting/main.c
+
+There you will see the control loop, which generates runtime data for all the robots.
