@@ -13,7 +13,7 @@ int main (int argc, char** argv) {
   // }
   
   // Limit of 10 for now
-  int n_robots = 3;
+  int n_robots = 5;
   int max_battery = 50;
   int i,j,k,l;
 
@@ -47,7 +47,7 @@ int main (int argc, char** argv) {
     addRtsData(robotarium[i],max_battery,rand() % cvs->width, rand() % cvs->width);
   }
 
-  int n_iterations = 100;
+  int n_iterations = 200;
   float robot_speed = 0.1;
   float resolution = 0.1;
   int weights_x[10] = {0};
@@ -114,8 +114,8 @@ int main (int argc, char** argv) {
         battery_weight = ((float)cur_bat/(float)max_battery) * 0.5;
         coverage_weight = 1-battery_weight;
       }
-      battery_weight = 0;
-      coverage_weight = 1;
+      // battery_weight = 0;
+      // coverage_weight = 1;
 
       x_vec = (optimal_charger.x - cur_x) * battery_weight;
       y_vec = (optimal_charger.y - cur_y) * battery_weight;
@@ -129,6 +129,12 @@ int main (int argc, char** argv) {
       printf("Robo_loc[%d] x: %3.3f, y: %3.3f\n",j, cur_x,cur_y);
       printf("Robo_vec[%d] x: %3.3f, y: %3.3f\n",j, x_vec,y_vec);
       printf("Robo[%d] centroid: (%3.3f,%3.3f)\n",j,centroids[j].x,centroids[j].y);
+      printf("Robo[%d] optcharg: (%d,%d)\n",j,optimal_charger.x,optimal_charger.y);
+
+      if (roundf(cur_x) == optimal_charger.x && roundf(cur_y) == optimal_charger.y) {
+        printf("robot %d charged up!\n",j);
+        cur_bat = max_battery+1;
+      }
 
       addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
     }
@@ -175,9 +181,6 @@ int main (int argc, char** argv) {
   }
   generateBitmapImage(cvs);
 
-  return 0;
-
-
 
   printf("\nStarting bmp generation loop\n\n");
   struct ColorVec *bg_clr = initColor(255,255,255);
@@ -205,8 +208,7 @@ int main (int argc, char** argv) {
       LOC l = chargers[j];
       //drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,charger_clr);
     }
-
-    // generateBitmapImage(cvs);
+    generateBitmapImage(cvs);
   }
 
   printf("\bGO 3\n\n");

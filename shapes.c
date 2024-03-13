@@ -24,9 +24,9 @@ int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
   }
   unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
                                 ((int)x) * BYTES_PER_PIXEL);
-  *(pixelpointer + RED) = (unsigned char) *(clr->clr + RED);
-  *(pixelpointer + GREEN) = (unsigned char) *(clr->clr + GREEN);
-  *(pixelpointer + BLUE) = (unsigned char) *(clr->clr + BLUE);
+  *(pixelpointer + RED) = (unsigned char) clr->r;
+  *(pixelpointer + GREEN) = (unsigned char) clr->g;
+  *(pixelpointer + BLUE) = (unsigned char) clr->b;
 }
 
 

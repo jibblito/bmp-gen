@@ -164,4 +164,5 @@ int main (int argc, char **argv)
     
     generateBitmapImage(beall);
     printf("Image generated!!\n");
+    free(beall);
 }

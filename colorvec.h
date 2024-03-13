@@ -1,15 +1,17 @@
 #ifndef COLORVEC_H
 #define COLORVEC_H
 
-#define BLUE 0
+#define RED 0
 #define GREEN 1
-#define RED 2
+#define BLUE 2
 
 struct ColorVec {
-  unsigned char clr[3];
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
 };
 
-struct ColorVec *initColor(unsigned char r, unsigned char g, unsigned char b);
+void initColor(struct ColorVec *clr, unsigned char r, unsigned char g, unsigned char b);
 void printColorVec(struct ColorVec *clr);
 
 #endif

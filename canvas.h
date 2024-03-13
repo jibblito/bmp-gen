@@ -15,8 +15,8 @@
 struct Canvas {
   int height, width;
   int rowlength;
-  unsigned char *image;
   char name[MAX_FILENAME_LENGTH];
+  unsigned char image[];
 };
 
 void generateBitmapImage(struct Canvas *cvs);

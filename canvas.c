@@ -7,22 +7,27 @@
 #include <stdlib.h>
 #include "canvas.h"
 
+
+/**
+ *  HEIGHT (4) | WIDTH (4) | ROWLENGTH (4) | NAME (32) | IMAGE (variable)
+ */
 struct Canvas *initCanvas(int width, int height, char *name) {
-  struct Canvas *cvs = (struct Canvas*)malloc(sizeof(struct Canvas)); 
+  size_t n_bytes = sizeof(struct Canvas) + height*width*BYTES_PER_PIXEL*sizeof(unsigned char);
+  struct Canvas *cvs = malloc(n_bytes); 
   cvs->height = height;
   cvs->width = width;
   cvs->rowlength = width * BYTES_PER_PIXEL;
-  sprintf(cvs->name, name);
-  cvs->image = malloc(height * width * BYTES_PER_PIXEL);
+  snprintf(cvs->name,sizeof(cvs->name), name);
+  return cvs;
 }
 
 /**
  * Open and write the bitmap image file, line by line..... Do it.
  */
 void generateBitmapImage(struct Canvas *cvs) {
-  int widthInBytes = cvs->width * BYTES_PER_PIXEL;
+  int widthInBytes = cvs->width * BYTES_PER_PIXEL; // ex 90 * 3 = 270
   unsigned char padding[3] = {0,0,0};
-  int paddingSize = (4 - (widthInBytes) % 4) % 4;
+  int paddingSize = widthInBytes % 4;
   int stride = (widthInBytes) + paddingSize;
 
   FILE* imageFile = fopen(cvs->name, "wb");
@@ -48,7 +53,7 @@ void generateBitmapImage(struct Canvas *cvs) {
  * the format of the File Header... Signature I'm not sure on.
  */
 unsigned char* createBitmapFileHeader(int height, int stride) {
-  int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
+  size_t fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
   static unsigned char fileHeader[] = {
       0,0,     /// signature
