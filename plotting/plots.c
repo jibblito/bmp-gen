@@ -131,6 +131,8 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int d
   }
 }
 
+
+
 // Graph a robot time series (single-frame)
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame) {
   etchCircle(cvs,(int)rts->x[frame],(int)rts->y[frame],3,fn_clr);

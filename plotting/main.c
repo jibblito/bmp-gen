@@ -175,6 +175,14 @@ int main (int argc, char** argv) {
   initColor(&bg_clr,255,255,255);
   initColor(&axis_clr,0,0,0);
 
+  struct ColorVec green,red;
+  initColor(&green,0,255,0);
+  initColor(&red,255,0,0);
+  struct ColorVecGradient greenToRed;
+  greenToRed.n_colors = 0;
+  addColorToColorVecGradient(&greenToRed,&green);
+  addColorToColorVecGradient(&greenToRed,&red);
+
   for (i = 0; i < robotarium[0]->length; i++) {
 
      char filename[32];
@@ -190,7 +198,10 @@ int main (int argc, char** argv) {
      drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
 
     for (j = 0; j < n_robots; j++) {
-      graphRobotTimeSeriesFrame(cvs,robotarium[j],0,&robot_colors[j],i);
+      float battery = robotarium[j]->battery[i];
+      float degree = battery/(float)max_battery;
+      struct ColorVec battery_lvl = getColorFromGradient(&greenToRed,degree);
+      graphRobotTimeSeriesFrame(cvs,robotarium[j],0,&battery_lvl,i);
     }
 
     for (j = 0; j < n_chargers; j++) {
