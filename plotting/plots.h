@@ -23,7 +23,7 @@ struct TimeSeries {
 // Robot Time series: Battery, X, Y for each individual robot
 struct RobotTimeSeries {
   int length;
-  float *battery, *x, *y;
+  float battery[MAX_TS_SIZE], x[MAX_TS_SIZE], y[MAX_TS_SIZE];
 };
 
 struct TimeSeries *initTimeSeries(char* file);

@@ -47,17 +47,9 @@ struct TimeSeries *initTimeSeries (char* data_file) {
 }
 
 struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
-
-  struct RobotTimeSeries *rts = malloc(sizeof(struct RobotTimeSeries) +
-                                       sizeof(float) * MAX_TS_SIZE * 3); // 3 float series: battery, x, y
-
-  // Three data set pointers, each equi-sized
-  rts->battery = (float*) (rts + sizeof(struct RobotTimeSeries));
-  rts->x = rts->battery + sizeof(float)*MAX_TS_SIZE;
-  rts->y = rts->x + sizeof(float)*MAX_TS_SIZE;
-
-  // printf("s:%p, bat:%p, x:%p, y:%p\n",rts,rts->battery,rts->x,rts->y); // debug
-
+  // RobotTimeSeries struct | battery | x | y
+  size_t rts_size = sizeof(struct RobotTimeSeries);
+  struct RobotTimeSeries *rts = malloc(rts_size); 
   int length = 0;
 
   if (data_file != NULL) {
@@ -104,39 +96,37 @@ int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
 }
 
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
-  struct ColorVec *bg_clr = initColor(255,255,255);
-  struct ColorVec *axis_clr = initColor(0,0,0);
-  struct ColorVec *fn_clr = initColor(255,0,0);
-  drawLine(cvs,0,0,0,cvs->width,bg_clr);
-  drawLine(cvs,0,0,cvs->width,0,bg_clr);
+  struct ColorVec bg_clr, axis_clr, fn_clr;
+  initColor(&bg_clr,255,255,255);
+  initColor(&axis_clr,0,0,0);
+  initColor(&fn_clr,255,0,0);
+  drawLine(cvs,0,0,0,cvs->width,&bg_clr);
+  drawLine(cvs,0,0,cvs->width,0,&bg_clr);
 
   int i;
   for (i = 0; i < ts->length; i++) {
-    plot(cvs,i,ts->data[i],fn_clr);
+    plot(cvs,i,ts->data[i],&fn_clr);
   }
 
 }
 
-
-
-
 // Graph a robot time series
 void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr) {
   if (draw_bg == 1) {
-    struct ColorVec *bg_clr = initColor(255,255,255);
-    struct ColorVec *axis_clr = initColor(0,0,0);
+    struct ColorVec bg_clr, axis_clr;
+    initColor(&bg_clr,255,255,255);
+    initColor(&axis_clr,0,0,0);
 
-    drawRect(cvs,0,0,cvs->width-1,cvs->height-1,bg_clr);
-    drawLine(cvs,0,0,0,cvs->height,axis_clr);
-    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,axis_clr);
-    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,axis_clr);
-    drawLine(cvs,cvs->width-1,0,0,0,axis_clr);
+    drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
+    drawLine(cvs,0,0,0,cvs->height,&axis_clr);
+    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
+    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
+    drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
   }
 
   int i;
   for (i = 0; i < rts->length; i++) {
     // printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
-  printf("frame: %d\n",i);
     etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
   }
 }
