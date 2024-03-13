@@ -40,11 +40,13 @@ int main (int argc, char **argv)
 
     struct Canvas *beall = initCanvas(height, width, imageFileName);
 
-    struct ColorVec* blue = initColor(0,0,255);
-    struct ColorVec* red = initColor(255,0,0);
-    struct ColorVec* green = initColor(0,255,0);
-    struct ColorVec* slack_blue = initColor(50,30,177);
-    struct ColorVec* fuschia = initColor(230,3,102);
+    struct ColorVec blue,red,green,slack_blue,fuschia;
+
+    initColor(&blue,0,0,255);
+    initColor(&red,255,0,0);
+    initColor(&green,0,255,0);
+    initColor(&slack_blue,50,30,177);
+    initColor(&fuschia,230,3,102);
 
     /**
      * experiment zone
@@ -52,15 +54,15 @@ int main (int argc, char **argv)
 
     int i;
     for (i = 0; i < beall->width; i++) {
-      plot(beall,i,10,blue);
-      plot(beall,90,i,green);
-      plot(beall,i,i/2,slack_blue);
-      plot(beall,i,i,red);
+      plot(beall,i,10,&blue);
+      plot(beall,90,i,&green);
+      plot(beall,i,i/2,&slack_blue);
+      plot(beall,i,i,&red);
     }
-    plot(beall,30,30,blue);
-    etchCircle(beall, 50, 50, 10, fuschia);
+    plot(beall,30,30,&blue);
+    etchCircle(beall, 50, 50, 10, &fuschia);
 
-    drawLine(beall, 29,5,29,189,fuschia);
+    drawLine(beall, 29,5,29,189,&fuschia);
 
 
     int r, g, b;
@@ -80,11 +82,12 @@ int main (int argc, char **argv)
       r = 155 * shade_fac;
       g = 153 * shade_fac;
       b = 251 * shade_fac;
-      struct ColorVec* giggle= initColor(r,g,b);
-      drawLine(beall,i,0,width-i,width,giggle);
+      struct ColorVec giggle;
+      initColor(&giggle,r,g,b);
+      drawLine(beall,i,0,width-i,width,&giggle);
     }
 
-    drawRect(beall,30,30,20,20,green);
+    drawRect(beall,30,30,20,20,&green);
 
     /*
     for (i = 0; i <= width; i++) {

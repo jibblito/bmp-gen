@@ -27,7 +27,7 @@ struct Canvas *initCanvas(int width, int height, char *name) {
 void generateBitmapImage(struct Canvas *cvs) {
   int widthInBytes = cvs->width * BYTES_PER_PIXEL; // ex 90 * 3 = 270
   unsigned char padding[3] = {0,0,0};
-  int paddingSize = widthInBytes % 4;
+  int paddingSize = (4 - widthInBytes % 4) % 4;
   int stride = (widthInBytes) + paddingSize;
 
   FILE* imageFile = fopen(cvs->name, "wb");

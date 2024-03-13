@@ -1,9 +1,9 @@
 #ifndef COLORVEC_H
 #define COLORVEC_H
 
-#define RED 0
+#define RED 2
 #define GREEN 1
-#define BLUE 2
+#define BLUE 0
 
 struct ColorVec {
   unsigned char r;

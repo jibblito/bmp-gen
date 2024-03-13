@@ -22,8 +22,7 @@
 
 int main (int argc, char **argv)
 {
-    // Generate square 480x480 image
-    int height = 20;
+    int height = 201;
     int width = height;
 
     char imageFileName[32];
@@ -39,21 +38,48 @@ int main (int argc, char **argv)
 
     struct Canvas *beall = initCanvas(height, width, imageFileName);
 
-    struct ColorVec easy,white;
-
-//     struct ColorVec* blue = initColor(0,0,255);
-//     struct ColorVec* red = initColor(255,0,0);
-//     struct ColorVec* green = initColor(0,255,0);
-//     struct ColorVec* slack_blue = initColor(50,30,177);
-//     struct ColorVec* fuschia = initColor(230,3,102);
-
+    struct ColorVec easy,white,blue,red,green,slack_blue,fuschia;
 
     initColor(&easy,   254,  1,    253);
     initColor(&white,  255,  255,  255);
+    initColor(&blue,     0,    0,   255);
+    initColor(&red,    255,   0,    0);
+    initColor(&green,    0,   255,  0);
+    initColor(&slack_blue,    50,    30,    177);
+    initColor(&fuschia,  230,   3,    102);
 
     drawRect(beall,0,0,height-1,width-1,&easy);
     drawLine(beall,width-1,0,width-1,height,&white);
-//    etchCircle(beall, 10, 10, 3, fuschia);
+    etchCircle(beall, 30, 30, 10, &blue);
+
+    int i;
+    for (i = 0; i < beall->width; i++) {
+      plot(beall,i,10,&blue);
+      plot(beall,90,i,&green);
+      plot(beall,i,i/2,&slack_blue);
+      plot(beall,i,i,&red);
+    }
+
+    int r, g, b;
+    float offset = 1;
+
+    struct ColorVec giggle;
+    for (i = -50; i < 50; i++) {
+      int grade = 255/2 + (int)(sin(offset+(float)i/5)*(255/2));
+      initColor(&giggle,grade,grade,grade);
+      drawLine(beall,20,100+i,180,100-i,&giggle);
+    }
+
+    // Joining of four Diamonds
+    for (i = 0; i <= width; i++) {
+      float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
+      r = 155 * shade_fac;
+      g = 153 * shade_fac;
+      b = 251 * shade_fac;
+      initColor(&giggle,r,g,b);
+      drawLine(beall,i,0,width-i,width,&giggle);
+    }
+
     
     generateBitmapImage(beall);
 
