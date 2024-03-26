@@ -10,12 +10,16 @@ int main (int argc, char** argv) {
   
   // Limit of 10 for now
   int n_robots = 6;
-  int max_battery = 100;
+  int max_battery = 50;
   int i,j,k,l;
+
+  int robotarium_width = GRID_SIZE + 100 % (int)round(sqrt(GRID_SIZE));
+  robotarium_width = 128;
 
   // Initialise pointers
   struct RobotTimeSeries *robotarium[10];
-  struct Canvas *cvs = initCanvas(100,100,"robotarium.bmp");
+  struct Canvas *cvs = initCanvas(robotarium_width,robotarium_width,"robotarium.bmp");
+
 
   for (i = 0; i < n_robots; i++) {
     robotarium[i] = initRobotTimeSeries(NULL);
@@ -47,13 +51,19 @@ int main (int argc, char** argv) {
     addRtsData(robotarium[i],max_battery,chargers[i].x,chargers[i].y);
   }
 
-  int n_iterations = 200;
+  // Prepare DataGrid time series
+  struct DataGridTimeSeries *DATA_mean = initDataGridTimeSeries(NULL);
+  struct DataGridTimeSeries *DATA_variance = initDataGridTimeSeries(NULL);
+
+  int n_iterations = 3;
   float robot_speed = 0.2;
   float resolution = 0.1;
   int weights_x[10] = {0};
   int weights_y[10] = {0};
   int cell_count[10] = {0};
   LOC centroids[10];
+  LOC cells_of_interest[GRID_SIZE];
+  int interesting_cells;
 
   // Loop: Find centroids for each robot, the apply vector. Generate time series
   for (i = 0; i <= n_iterations; i++) {
@@ -63,6 +73,17 @@ int main (int argc, char** argv) {
       weights_x[j] = 0;
       weights_y[j] = 0;
       cell_count[j] = 0;
+    }
+
+    interesting_cells = 0;
+    for (j = 0; j < GRID_SIZE; j++) {
+      if(DATA_mean->dataGrid[i][j] == 0) {
+        LOC poi;
+        poi.x = j % 4 + cvs->width/8;
+        poi.y = j / 4 + cvs->width/8;
+        cells_of_interest[interesting_cells] = poi;
+        interesting_cells++;
+      }
     }
     
     // Iterate cells of resolution
@@ -135,6 +156,21 @@ int main (int argc, char** argv) {
 
       addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
     }
+
+    unsigned char gridData_sin[GRID_SIZE] = { 0 };
+    for (j = 0; j < GRID_SIZE; j++) {
+      int x_lvl = j % 8;
+      int y_lvl = j / 8;
+      int distFromCenterX = x_lvl-4;
+      int distFromCenterY = y_lvl-4;
+      float distFromCenter = sqrt(distFromCenterX*distFromCenterX+distFromCenterY*distFromCenterY);
+      // gridData_sin[j] = 255*(distFromCenter/8);
+      // gridData_sin[j] = (x_lvl*8 + y_lvl*4);
+      // gridData_sin[j] = 253 - y_lvl*10 - x_lvl*10;
+      gridData_sin[j] = i*10;
+    }
+    addGridData(DATA_mean, gridData_sin);
+    addGridData(DATA_variance, gridData_sin);
   }
   printf("Done generating data\n");
 
@@ -181,9 +217,10 @@ int main (int argc, char** argv) {
   initColor(&bg_clr,255,255,255);
   initColor(&axis_clr,0,0,0);
 
-  struct ColorVec green,red;
+  struct ColorVec green,red,yellow;
   initColor(&green,0,255,0);
   initColor(&red,255,0,0);
+  initColor(&yellow,255,255,0);
   struct ColorVecGradient greenToRed;
   greenToRed.n_colors = 0;
   addColorToColorVecGradient(&greenToRed,&green);
@@ -200,6 +237,7 @@ int main (int argc, char** argv) {
   addColorToColorVecGradient(&infoGradient,&darkBlue);
   struct ColorVecGradient yelRedBlu;
   yelRedBlu.n_colors = 0;
+  addColorToColorVecGradient(&yelRedBlu,&yellow);
   addColorToColorVecGradient(&yelRedBlu,&red);
   addColorToColorVecGradient(&yelRedBlu,&blue);
 
@@ -209,16 +247,33 @@ int main (int argc, char** argv) {
      sprintf(filename,"out/00%d.bmp\0",i);
      if (i > 9) sprintf(filename,"out/0%d.bmp\0",i);
      if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
-     cvs = initCanvas(100,100,filename);
+     cvs = initCanvas(robotarium_width,robotarium_width,filename);
 
      struct ColorVec time_passage = getColorFromGradient(&infoGradient,(float)i/(float)n_iterations);
 
 //     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
-     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&time_passage);
-     drawLine(cvs,0,0,0,cvs->height,&axis_clr);
-     drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
-     drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
-     drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
+
+     int divisor = (int) round(sqrt(GRID_SIZE));
+
+     int division = cvs->height / divisor;
+     for (j = 0; j < GRID_SIZE; j++) {
+       int x_lvl = (j % divisor)*division;
+       int y_lvl = (j / divisor)*division;
+       unsigned char data = DATA_mean->dataGrid[i][j];
+       float degree = ((float)data)/258.0f;
+       struct ColorVec infoLvl = getColorFromGradient(&yelRedBlu,degree);
+       if ( j > 60 ) {
+         printf("Degree: %3.3f\n",degree);
+         printf("Data: %d\n",DATA_mean->dataGrid[i][j]);
+       }
+       drawRect(cvs,x_lvl,y_lvl,x_lvl+division-1,y_lvl+division-1,&infoLvl);
+       // drawLine(cvs,x_lvl+division-1,y_lvl,x_lvl+division-1,y_lvl+division-1,&teal);
+       // drawLine(cvs,x_lvl,y_lvl+division-1,x_lvl+division-1,y_lvl+division-1,&green);
+     }
+     // drawLine(cvs,0,0,0,cvs->height,&axis_clr);
+     // drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
+     // drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
+     // drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
 
     for (j = 0; j < n_robots; j++) {
       float battery = robotarium[j]->battery[i];
@@ -229,7 +284,7 @@ int main (int argc, char** argv) {
 
     for (j = 0; j < n_chargers; j++) {
       LOC l = chargers[j];
-      drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,&charger_clr);
+      drawRect(cvs,l.x,l.y,l.x,l.y,&charger_clr);
     }
     generateBitmapImage(cvs);
   }
