@@ -66,7 +66,10 @@ int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZ
     printf("Time series exceeds MAX_TS_SIZE\n");
     return 12;
   }
-  snprintf(dgts->dataGrid[dgts->length],GRID_SIZE+1,"%s",dataGrid);
+  int i;
+  for (i = 0; i < GRID_SIZE; i++) {
+    dgts->dataGrid[dgts->length][i] = dataGrid[i];
+  }
   dgts->length = dgts->length + 1;
   return dgts->length;
 

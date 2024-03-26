@@ -164,10 +164,7 @@ int main (int argc, char** argv) {
       int distFromCenterX = x_lvl-4;
       int distFromCenterY = y_lvl-4;
       float distFromCenter = sqrt(distFromCenterX*distFromCenterX+distFromCenterY*distFromCenterY);
-      // gridData_sin[j] = 255*(distFromCenter/8);
-      // gridData_sin[j] = (x_lvl*8 + y_lvl*4);
-      // gridData_sin[j] = 253 - y_lvl*10 - x_lvl*10;
-      gridData_sin[j] = i*10;
+      gridData_sin[j] = 255*(distFromCenter/8);
     }
     addGridData(DATA_mean, gridData_sin);
     addGridData(DATA_variance, gridData_sin);
@@ -262,10 +259,6 @@ int main (int argc, char** argv) {
        unsigned char data = DATA_mean->dataGrid[i][j];
        float degree = ((float)data)/258.0f;
        struct ColorVec infoLvl = getColorFromGradient(&yelRedBlu,degree);
-       if ( j > 60 ) {
-         printf("Degree: %3.3f\n",degree);
-         printf("Data: %d\n",DATA_mean->dataGrid[i][j]);
-       }
        drawRect(cvs,x_lvl,y_lvl,x_lvl+division-1,y_lvl+division-1,&infoLvl);
        // drawLine(cvs,x_lvl+division-1,y_lvl,x_lvl+division-1,y_lvl+division-1,&teal);
        // drawLine(cvs,x_lvl,y_lvl+division-1,x_lvl+division-1,y_lvl+division-1,&green);
