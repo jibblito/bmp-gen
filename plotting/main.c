@@ -5,69 +5,103 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
+#include <string.h>
+
+typedef struct location {
+  float x,y;
+} LOC;
+
+void validateLoc(LOC *l, float width) {
+  if(l->x < 0) l->x = 0;
+  if(l->x >= width) l->x = width;
+  if(l->y < 0) l->y = 0;
+  if(l->y >= width) l->y = width;
+}
+
+typedef struct xyVector {
+  float x_v,y_v;
+} VEC;
+
+void normalizeVector(VEC *v) {
+  float full_vec = sqrt(pow(v->x_v,2)+pow(v->y_v,2));
+  if (full_vec < 0.2f) {
+    v->x_v = 0;
+    v->y_v = 0;
+  } else if (full_vec < 2.5f) {
+    v->x_v = v->x_v/2;
+    v->y_v = v->y_v/2;
+  } else {
+    float normal_ratio = 1/full_vec;
+    v->x_v = v->x_v * normal_ratio;
+    v->y_v = v->y_v * normal_ratio;
+  }
+}
+
+void scaleVector(VEC *v, float scale) {
+  v->x_v = v->x_v * scale;
+  v->y_v = v->y_v * scale;
+}
+
 
 int main (int argc, char** argv) {
   
   // Limit of 10 for now
   int n_robots = 6;
-  int max_battery = 50;
+  int max_battery = 100;
   int i,j,k,l;
 
-  int robotarium_width = GRID_SIZE + 100 % (int)round(sqrt(GRID_SIZE));
-  robotarium_width = 128;
+  // Display constants
+  int _ROWLENGTH, _ROBOTARIUM_WIDTH, _CELL_WIDTH;
+
+  _ROWLENGTH = round(sqrt(GRID_SIZE));
+  _ROBOTARIUM_WIDTH = 100 + _ROWLENGTH - (100 % _ROWLENGTH);
+  _CELL_WIDTH = _ROBOTARIUM_WIDTH / _ROWLENGTH;
 
   // Initialise pointers
   struct RobotTimeSeries *robotarium[10];
-  struct Canvas *cvs = initCanvas(robotarium_width,robotarium_width,"robotarium.bmp");
-
-
   for (i = 0; i < n_robots; i++) {
     robotarium[i] = initRobotTimeSeries(NULL);
   }
 
-  typedef struct location {
-    float x,y;
-  } LOC;
 
   // Prepare charger locations
   int n_chargers = n_robots;
   LOC *chargers = malloc(sizeof(LOC) * n_chargers);
-  int frac = cvs->height/(n_chargers/2);
+  int frac = _ROBOTARIUM_WIDTH/(n_chargers/2);
   int offset = frac/2;
   for (i = 0; i < 2; i++) {
     if (i%2==0) chargers[i].y = 0;
-    else chargers[i].y = cvs->height-1;
-    chargers[i].x = cvs->width/2;
+    else chargers[i].y = _ROBOTARIUM_WIDTH-1;
+    chargers[i].x = _ROBOTARIUM_WIDTH/2;
   }
   for (;i<n_chargers;i++) {
     if (i%2==0) chargers[i].x = 0;
-    else chargers[i].x = cvs->width-1;
+    else chargers[i].x = _ROBOTARIUM_WIDTH-1;
     chargers[i].y = (i/2)*frac + offset;
   }
 
-
   // Prepare time series data sheets for robot locations
   for (i = 0; i < n_robots; i++) {
-    addRtsData(robotarium[i],max_battery,chargers[i].x,chargers[i].y);
+    addRtsData(robotarium[i],max_battery,chargers[i].x,chargers[i].y,0,0);
   }
 
   // Prepare DataGrid time series
-  struct DataGridTimeSeries *DATA_mean = initDataGridTimeSeries(NULL);
-  struct DataGridTimeSeries *DATA_variance = initDataGridTimeSeries(NULL);
+  struct DataGridTimeSeries *DATA_coverage = initDataGridTimeSeries(NULL);
+  unsigned char emptyGrid[GRID_SIZE] ={0};
+  addGridData(DATA_coverage,emptyGrid);
 
-  int n_iterations = 3;
-  float robot_speed = 0.2;
+  int n_iterations = 500;
+  float robot_speed = 2.5;
   float resolution = 0.1;
   int weights_x[10] = {0};
   int weights_y[10] = {0};
   int cell_count[10] = {0};
   LOC centroids[10];
-  LOC cells_of_interest[GRID_SIZE];
+  LOC cells_of_interest[GRID_SIZE] = {0};
   int interesting_cells;
 
   // Loop: Find centroids for each robot, the apply vector. Generate time series
   for (i = 0; i <= n_iterations; i++) {
-    printf("=============\nITERATION %d\n==============\n\n",i);
 
     for (j = 0; j < n_robots; j++) {
       weights_x[j] = 0;
@@ -76,19 +110,20 @@ int main (int argc, char** argv) {
     }
 
     interesting_cells = 0;
+    
     for (j = 0; j < GRID_SIZE; j++) {
-      if(DATA_mean->dataGrid[i][j] == 0) {
+      if(DATA_coverage->dataGrid[DATA_coverage->length-1][j] == 0) {
         LOC poi;
-        poi.x = j % 4 + cvs->width/8;
-        poi.y = j / 4 + cvs->width/8;
+        poi.x = (j % _ROWLENGTH) * _CELL_WIDTH + _CELL_WIDTH/2;
+        poi.y = (j / _ROWLENGTH) * _CELL_WIDTH + _CELL_WIDTH/2;
         cells_of_interest[interesting_cells] = poi;
         interesting_cells++;
       }
     }
     
-    // Iterate cells of resolution
-    for (j = 1; j < cvs->width-2; j = j + ((float)cvs->width)*resolution) {
-      for (k = 1; k < cvs->width-2; k = k + ((float)cvs->width)*resolution) {
+    // Iterate cells of resolution `resolution`
+    for (j = 1; j < _ROBOTARIUM_WIDTH-2; j = j + ((float)_ROBOTARIUM_WIDTH)*resolution) {
+      for (k = 1; k < _ROBOTARIUM_WIDTH-2; k = k + ((float)_ROBOTARIUM_WIDTH)*resolution) {
         float closest_dist = 10000;
         int closest_dist_index = -1;
         for (l = 0; l < n_robots; l++) {
@@ -109,110 +144,116 @@ int main (int argc, char** argv) {
 
     // Assign centroids (centers of mass)
     for (j = 0; j < n_robots; j++) {
-      centroids[j].x = (float)weights_x[j] / (float)cell_count[j];
-      centroids[j].y = (float)weights_y[j] / (float)cell_count[j];
+      if (cell_count[j] == 0) {
+        centroids[j].x = robotarium[j]->x[robotarium[j]->length-1];
+        centroids[j].y = robotarium[j]->y[robotarium[j]->length-1];
+      } else {
+        centroids[j].x = (float)weights_x[j] / (float)cell_count[j];
+        centroids[j].y = (float)weights_y[j] / (float)cell_count[j];
+      }
     }
 
+    // Copy data from last iteration
+
+    unsigned char boxes_covered[GRID_SIZE] = {0};
+    if (i > 0) memcpy(boxes_covered, DATA_coverage->dataGrid[DATA_coverage->length-1], GRID_SIZE);
+
     // Control Loop
-    for (j = 0; j < n_robots; j++) {
-      float x_vec,y_vec;
-
-      struct RobotTimeSeries *robot = robotarium[j];
-      LOC optimal_charger = chargers[j%n_chargers];
-      LOC centroid = centroids[j];
-
-      float cur_x = robot->x[(robot->length)-1];
-      float cur_y = robot->y[(robot->length)-1];
-      float cur_bat = robot->battery[(robot->length)-1];
     
-      float battery_weight, coverage_weight;
+    struct RobotTimeSeries *robot;
+    LOC cur_loc;
+    VEC cur_vec;
+    float cur_bat;
+    float battery_weight, coverage_weight, info_weight;
+    LOC optimal_charger, centroid, poi;
+
+    for (j = 0; j < n_robots; j++) {
+      robot = robotarium[j];
+      optimal_charger = chargers[j%n_chargers];
+      centroid = centroids[j];
+
+      cur_loc.x = robot->x[(robot->length)-1];
+      cur_loc.y = robot->y[(robot->length)-1];
+      cur_bat = robot->battery[(robot->length)-1];
+
+      poi = cells_of_interest[0];
+      float poi_dist = sqrt(pow(poi.x-cur_loc.x,2)+pow(poi.y-cur_loc.y,2));
+      for (k = 1; k < interesting_cells; k++) {
+        LOC ppoi = cells_of_interest[k];
+        float ppoi_dist = sqrt(pow(ppoi.x-cur_loc.x,2)+pow(ppoi.y-cur_loc.y,2));
+        if(ppoi_dist < poi_dist) {
+          poi_dist = ppoi_dist;
+          poi = ppoi;
+        }
+        //if (poi_dist < 1.0f) break;
+      }
 
       if (cur_bat < 20) {
         battery_weight = 1;
         coverage_weight = 0;
-      } else {
-        // battery_weight = ((float)cur_bat/(float)max_battery) * 0.5;
-        // coverage_weight = 1-battery_weight;
+        info_weight = 0;
+      } else if (interesting_cells == 0) {
         battery_weight = 0;
         coverage_weight = 1;
+        info_weight = 0;
+      } else {
+        battery_weight = 0;
+        coverage_weight = 0.2;
+        info_weight = 0.8;
       }
 
-      // float dist_to_charger_x = optimal_charger.x-cur_x;
-      // float dist_to_charger_y = optimal_charger.x-cur_y;
+      cur_vec.x_v = (optimal_charger.x - cur_loc.x) * battery_weight;
+      cur_vec.y_v = (optimal_charger.y - cur_loc.y) * battery_weight;
 
-      x_vec = (optimal_charger.x - cur_x) * battery_weight;
-      y_vec = (optimal_charger.y - cur_y) * battery_weight;
+      cur_vec.x_v += (centroid.x - cur_loc.x) * coverage_weight;
+      cur_vec.y_v += (centroid.y - cur_loc.y) * coverage_weight;
 
-      x_vec += (centroid.x - cur_x) * coverage_weight;
-      y_vec += (centroid.y - cur_y) * coverage_weight;
+      cur_vec.x_v += (poi.x - cur_loc.x) * info_weight;
+      cur_vec.y_v += (poi.y - cur_loc.y) * info_weight;
 
-      x_vec *= robot_speed;
-      y_vec *= robot_speed;
+      // Ensure barriers (no collisions)
+      for(k = 0; k < n_robots; k++) {
+        if(k != j) {
+          float diff_x = robotarium[k]->x[robotarium[j]->length-1] - cur_loc.x;
+          float diff_y = robotarium[k]->y[robotarium[j]->length-1] - cur_loc.y;
+          float barrier_dist = sqrt(pow(diff_x,2)+pow(diff_y,2));
+          if(barrier_dist < 5.0f) {
+            cur_vec.x_v = -5 * diff_x;
+            cur_vec.y_v = -5 * diff_y;
+          }
+        }
+      }
 
-      if (roundf(cur_x) == optimal_charger.x && roundf(cur_y) == optimal_charger.y) {
-        printf("robot %d charged up!\n",j);
+      normalizeVector(&cur_vec);
+      scaleVector(&cur_vec,robot_speed);
+
+      if (roundf(cur_loc.x) == optimal_charger.x && roundf(cur_loc.y) == optimal_charger.y) {
         cur_bat = max_battery+1;
       }
 
-      addRtsData(robot,cur_bat-1,cur_x + x_vec,cur_y + y_vec);
+      printf("i,j:%d,%d\n",i,j);
+      int cell_index = (int)cur_loc.x/_CELL_WIDTH+((int)cur_loc.y/_CELL_WIDTH)*_ROWLENGTH;
+      if (!boxes_covered[cell_index]) {
+        boxes_covered[cell_index] = (((float)i+1)/(float)n_iterations)*255;
+      }
+
+      LOC nextLoc;
+      nextLoc.x = cur_loc.x + cur_vec.x_v;
+      nextLoc.y = cur_loc.y + cur_vec.y_v;
+      validateLoc(&nextLoc,(float)_ROBOTARIUM_WIDTH);
+
+      addRtsData(robot,cur_bat-1,nextLoc.x,nextLoc.y, cur_vec.x_v, cur_vec.y_v);
     }
 
-    unsigned char gridData_sin[GRID_SIZE] = { 0 };
-    for (j = 0; j < GRID_SIZE; j++) {
-      int x_lvl = j % 8;
-      int y_lvl = j / 8;
-      int distFromCenterX = x_lvl-4;
-      int distFromCenterY = y_lvl-4;
-      float distFromCenter = sqrt(distFromCenterX*distFromCenterX+distFromCenterY*distFromCenterY);
-      gridData_sin[j] = 255*(distFromCenter/8);
-    }
-    addGridData(DATA_mean, gridData_sin);
-    addGridData(DATA_variance, gridData_sin);
+    addGridData(DATA_coverage, boxes_covered);
   }
-  printf("Done generating data\n");
 
+  // Initialize COLORS and GRADIENTS
 
-  struct ColorVec robot_colors[10]; 
-  initColor(&robot_colors[0],255,0,0);      initColor(&robot_colors[1],255,255,0);
-  initColor(&robot_colors[2],30,255,123);   initColor(&robot_colors[3],150,200,200);
-  initColor(&robot_colors[4],66,59,201);    initColor(&robot_colors[5],200,100,110);
-  initColor(&robot_colors[6],200,100,200);  initColor(&robot_colors[7],88,199,130);
-  initColor(&robot_colors[8],80,120,101);   initColor(&robot_colors[9],255,100,100);
-
-  struct ColorVec charger_clr,finish_clr;
-  initColor(&charger_clr,230,210,10);
-  initColor(&finish_clr,70,50,130);
-
-  // Generate frames of animation
-  for (i = 0; i < n_robots; i++) {
-    if (i == 0) {
-      graphRobotTimeSeries(cvs,robotarium[i],1,&robot_colors[i]);
-    } else {
-      graphRobotTimeSeries(cvs,robotarium[i],0,&robot_colors[i]);
-    }
-    etchCircle(cvs,robotarium[i]->x[0],robotarium[i]->y[0],3,&charger_clr);
-    etchCircle(cvs,robotarium[i]->x[robotarium[0]->length-1],robotarium[i]->y[robotarium[0]->length-1],3,&finish_clr);
-  }
-  for (i = 0; i < n_chargers; i++) {
-    LOC l = chargers[i];
-    drawRect(cvs,l.x-1,l.y-1,l.x+1,l.y+1,&charger_clr);
-  }
-  generateBitmapImage(cvs);
-
-//  // END EARLY
-//   for (i = 0; i < n_robots; i++) {
-//     free(robotarium[i]);
-//   }
-//   free(cvs);
-//   free(chargers);
-//   return 0;
-//   // END EARLY
-
-
-  printf("\nStarting bmp generation loop\n\n");
-  struct ColorVec bg_clr,axis_clr;
+  struct ColorVec bg_clr,axis_clr, charger_clr;
   initColor(&bg_clr,255,255,255);
   initColor(&axis_clr,0,0,0);
+  initColor(&charger_clr,230,210,10);
 
   struct ColorVec green,red,yellow;
   initColor(&green,0,255,0);
@@ -222,6 +263,11 @@ int main (int argc, char** argv) {
   greenToRed.n_colors = 0;
   addColorToColorVecGradient(&greenToRed,&green);
   addColorToColorVecGradient(&greenToRed,&red);
+  struct ColorVecGradient greenYelRed;
+  greenYelRed.n_colors = 0;
+  addColorToColorVecGradient(&greenYelRed,&green);
+  addColorToColorVecGradient(&greenYelRed,&yellow);
+  addColorToColorVecGradient(&greenYelRed,&red);
 
   struct ColorVec teal,blue,darkBlue;
   initColor(&teal,0,255,240);
@@ -232,11 +278,11 @@ int main (int argc, char** argv) {
   addColorToColorVecGradient(&infoGradient,&teal);
   addColorToColorVecGradient(&infoGradient,&blue);
   addColorToColorVecGradient(&infoGradient,&darkBlue);
-  struct ColorVecGradient yelRedBlu;
-  yelRedBlu.n_colors = 0;
-  addColorToColorVecGradient(&yelRedBlu,&yellow);
-  addColorToColorVecGradient(&yelRedBlu,&red);
-  addColorToColorVecGradient(&yelRedBlu,&blue);
+
+  // Generate Images of each frame of simulation
+
+  printf("\nStarting bmp generation loop\n\n");
+  struct Canvas *cvs;
 
   for (i = 0; i < robotarium[0]->length; i++) {
 
@@ -244,29 +290,24 @@ int main (int argc, char** argv) {
      sprintf(filename,"out/00%d.bmp\0",i);
      if (i > 9) sprintf(filename,"out/0%d.bmp\0",i);
      if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
-     cvs = initCanvas(robotarium_width,robotarium_width,filename);
+     cvs = initCanvas(_ROBOTARIUM_WIDTH,_ROBOTARIUM_WIDTH,filename);
 
-     struct ColorVec time_passage = getColorFromGradient(&infoGradient,(float)i/(float)n_iterations);
-
-//     drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
-
-     int divisor = (int) round(sqrt(GRID_SIZE));
-
-     int division = cvs->height / divisor;
      for (j = 0; j < GRID_SIZE; j++) {
-       int x_lvl = (j % divisor)*division;
-       int y_lvl = (j / divisor)*division;
-       unsigned char data = DATA_mean->dataGrid[i][j];
-       float degree = ((float)data)/258.0f;
-       struct ColorVec infoLvl = getColorFromGradient(&yelRedBlu,degree);
-       drawRect(cvs,x_lvl,y_lvl,x_lvl+division-1,y_lvl+division-1,&infoLvl);
-       // drawLine(cvs,x_lvl+division-1,y_lvl,x_lvl+division-1,y_lvl+division-1,&teal);
-       // drawLine(cvs,x_lvl,y_lvl+division-1,x_lvl+division-1,y_lvl+division-1,&green);
+       int x_lvl = (j % _ROWLENGTH)*_CELL_WIDTH;
+       int y_lvl = (j / _ROWLENGTH)*_CELL_WIDTH;
+
+       unsigned char data = DATA_coverage->dataGrid[i][j];
+       float degree = (float)data/255.0f;
+       struct ColorVec infoLvl = getColorFromGradient(&infoGradient,degree);
+       if (data == 0) infoLvl = bg_clr;
+
+       drawRect(cvs,x_lvl,y_lvl,x_lvl+_CELL_WIDTH-1,y_lvl+_CELL_WIDTH-1,&infoLvl);
      }
-     // drawLine(cvs,0,0,0,cvs->height,&axis_clr);
-     // drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
-     // drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
-     // drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
+
+     drawLine(cvs,0,0,0,cvs->height,&axis_clr);
+     drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
+     drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
+     drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
 
     for (j = 0; j < n_robots; j++) {
       float battery = robotarium[j]->battery[i];
@@ -282,12 +323,12 @@ int main (int argc, char** argv) {
     generateBitmapImage(cvs);
   }
 
-  // ENDY EARLY
+  // END
   for (i = 0; i < n_robots; i++) {
     free(robotarium[i]);
   }
   free(cvs);
   free(chargers);
   return 0;
-  // ENDY EARLY
+  // END
 }

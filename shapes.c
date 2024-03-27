@@ -15,11 +15,9 @@
  */
 int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
   if (x >cvs->width-1 || x < 0) {
-    fprintf(stderr,"X coordinate out of range for canvas!\n");
     return 1;
   }
   if (y > cvs->height-1 || y < 0) {
-    fprintf(stderr,"Y coordinate out of range for canvas!\n");
     return 1;
   }
   unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 

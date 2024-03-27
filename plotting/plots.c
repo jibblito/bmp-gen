@@ -112,7 +112,7 @@ struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
 }
 
 // add a RTS triplet to a data struct
-int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
+int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y, float x_vec, float y_vec) {
   if (rts->length == MAX_TS_SIZE) {
     printf("Time series exceeds MAX_TS_SIZE\n");
     return 12;
@@ -120,6 +120,8 @@ int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y) {
   rts->battery[rts->length] = bat;
   rts->x[rts->length] = x;
   rts->y[rts->length] = y;
+  rts->x_vec[rts->length] = x_vec;
+  rts->y_vec[rts->length] = y_vec;
   rts->length = rts->length + 1;
   return rts->length;
 }

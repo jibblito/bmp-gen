@@ -11,7 +11,7 @@
 #include "../colorvec.h"
 
 #define MAX_TS_SIZE 512
-#define GRID_SIZE 64
+#define GRID_SIZE 400
 
 // Float data, for now.. No reason to expand beyond just yet (float'll do)
 struct TimeSeries {
@@ -30,7 +30,7 @@ struct DataGridTimeSeries {
 // Robot Time series: Battery, X, Y for each individual robot
 struct RobotTimeSeries {
   int length;
-  float battery[MAX_TS_SIZE], x[MAX_TS_SIZE], y[MAX_TS_SIZE];
+  float battery[MAX_TS_SIZE], x[MAX_TS_SIZE], y[MAX_TS_SIZE], x_vec[MAX_TS_SIZE], y_vec[MAX_TS_SIZE];
 };
 
 struct TimeSeries *initTimeSeries(char *data_file);
@@ -40,7 +40,7 @@ struct DataGridTimeSeries *initDataGridTimeSeries(char *data_file);
 int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZE]);
 
 struct RobotTimeSeries *initRobotTimeSeries(char *data_file);
-int addRtsData(struct RobotTimeSeries *rts, float bat, float x, float y);
+int addRtsData(struct RobotTimeSeries *rts, float bat, float x, float y, float x_vec, float y_vec);
 void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr);
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame);
 
