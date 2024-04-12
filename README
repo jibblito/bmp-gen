@@ -7,4 +7,13 @@ the functions and create some images of your own, you can run the tool known
 as `make` and then subsequently `make run`: This will generate a photo known
 as y.bmp, which you should be oble to open with any regular old image viewer.
 
+HOW TO RUN:
+
+`make` to create binary
+`make run` to create an image... 
+
+check out Makefile for other targets.
+
+    Hey, Bobby!
+
 Have fun creating, you little math wizard!
