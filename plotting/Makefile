@@ -4,7 +4,7 @@ run:
 	./plot-gen sample_series.csv
 
 main: main.c
-	gcc main.c plots.c ../obj/* -g -lm -o plot-gen
+	gcc main.c plots.c robotarium.c ../obj/* -g -lm -o plot-gen
 
 
 clean:

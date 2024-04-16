@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 
 #define BUF_SIZE 2048
 
@@ -46,6 +47,15 @@ struct TimeSeries *initTimeSeries (char* data_file) {
   return ts;
 }
 
+struct DataGrid *initDataGrid(unsigned char dataGrid[GRID_SIZE]) {
+  size_t dg_size = sizeof(struct DataGrid);
+  struct DataGrid *dg = malloc(dg_size);
+  int i;
+  for (i = 0; i < GRID_SIZE; i++) {
+    dg->dataGrid[i] = dataGrid[i];
+  }
+  return dg;
+}
 
 struct DataGridTimeSeries *initDataGridTimeSeries(char *data_file) {
   // RobotTimeSeries struct | battery | x | y
@@ -68,7 +78,7 @@ int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZ
   }
   int i;
   for (i = 0; i < GRID_SIZE; i++) {
-    dgts->dataGrid[dgts->length][i] = dataGrid[i];
+    dgts->dataGrid[dgts->length].dataGrid[i] = dataGrid[i];
   }
   dgts->length = dgts->length + 1;
   return dgts->length;
@@ -102,8 +112,8 @@ struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
       float y = atof(strtok_r(NULL,",",&saveptr2));
 
       rts->battery[length] = battery;
-      rts->x[length] = x;
-      rts->y[length] = y;
+      rts->loc[length].x = x;
+      rts->loc[length].y = y;
       length++;
     }
   }
@@ -112,20 +122,21 @@ struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
 }
 
 // add a RTS triplet to a data struct
-int addRtsData(struct RobotTimeSeries *rts, float bat, float x,  float y, float x_vec, float y_vec) {
+int addRtsData(struct RobotTimeSeries *rts, float bat, Vec2d location, Vec2d moment) {
   if (rts->length == MAX_TS_SIZE) {
     printf("Time series exceeds MAX_TS_SIZE\n");
     return 12;
   }
+
   rts->battery[rts->length] = bat;
-  rts->x[rts->length] = x;
-  rts->y[rts->length] = y;
-  rts->x_vec[rts->length] = x_vec;
-  rts->y_vec[rts->length] = y_vec;
+  rts->loc[rts->length] = location;
+  rts->moment[rts->length] = moment;
+
   rts->length = rts->length + 1;
   return rts->length;
 }
 
+// Graph a regular ole time series
 void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
   struct ColorVec bg_clr, axis_clr, fn_clr;
   initColor(&bg_clr,255,255,255);
@@ -142,29 +153,33 @@ void graphTimeSeries(struct Canvas *cvs, struct TimeSeries *ts) {
 }
 
 // Graph a robot time series
-void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr) {
-  if (draw_bg == 1) {
-    struct ColorVec bg_clr, axis_clr;
-    initColor(&bg_clr,255,255,255);
-    initColor(&axis_clr,0,0,0);
-
-    drawRect(cvs,0,0,cvs->width-1,cvs->height-1,&bg_clr);
-    drawLine(cvs,0,0,0,cvs->height,&axis_clr);
-    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
-    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
-    drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
-  }
-
+void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, struct ColorVec *fn_clr) {
   int i;
   for (i = 0; i < rts->length; i++) {
-    // printf("rts[%d] (x,y): (%3.3f),(%3.3f)\n",i,rts->x[i],rts->y[i]);
-    etchCircle(cvs,(int)rts->x[i],(int)rts->y[i],3,fn_clr);
+    int x = rts->loc[i].x;
+    int y = rts->loc[i].y;
+    if (rts->battery[i] <= 0.0f) {
+      drawLine(cvs,x-2,y-2,x+3,y+3,fn_clr);
+      drawLine(cvs,x-2,y+2,x+2,y-2,fn_clr);
+    } else {
+      etchCircle(cvs,x,y,3,fn_clr);
+    }
   }
 }
 
-
-
 // Graph a robot time series (single-frame)
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame) {
-  etchCircle(cvs,(int)rts->x[frame],(int)rts->y[frame],3,fn_clr);
+  int x = rts->loc[frame].x;
+  int y = rts->loc[frame].y;
+  if (rts->battery[frame] <= 0.0f) {
+    drawLine(cvs,x-2,y-2,x+3,y+3,fn_clr);
+    drawLine(cvs,x-2,y+2,x+2,y-2,fn_clr);
+  } else {
+    etchCircle(cvs,x,y,3,fn_clr);
+  }
+}
+
+// Find vector distance
+float vectorDistance(Vec2d from, Vec2d to) {
+  return sqrt(pow(to.x-from.x,2) + pow(to.y-from.y,2));
 }
