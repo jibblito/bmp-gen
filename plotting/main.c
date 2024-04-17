@@ -39,8 +39,10 @@ int main (int argc, char** argv) {
   float cur_bat[MAX_ROBOTS];
   Vec2d cur_loc[MAX_ROBOTS], cur_moment[MAX_ROBOTS];
 
-  memcpy(&DATA_coverage->dataGrid[0], &cur_coverage, sizeof(struct DataGrid));
-  memcpy(&DATA_phi->dataGrid[0],      &cur_phi,      sizeof(struct DataGrid));
+  for (i = 0; i < GRID_SIZE; i++) {
+    cur_coverage.data[i] = DATA_coverage->grids[0].data[i];
+    cur_phi.data[i] = DATA_phi->grids[0].data[i];
+  }
 
   for (i = 0; i < arena->n_robots; i++) {
     cur_bat[i] = arena->states[i]->battery[0];
@@ -59,7 +61,7 @@ int main (int argc, char** argv) {
   Vec2d cells_of_interest[GRID_SIZE] = {0};
 
 
-  int n_iterations = 100;
+  int n_iterations = 300;
 
   // Loop each iteration
   for (i = 0; i <= n_iterations; i++) {
@@ -69,7 +71,7 @@ int main (int argc, char** argv) {
     interesting_cells = 0;
 
     for (j = 0; j < GRID_SIZE; j++) {
-      if(cur_coverage.dataGrid[j] == 0) {
+      if(cur_coverage.data[j] == 0) {
         Vec2d poi;
         poi.x = (j % CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;
         poi.y = (j / CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;
@@ -137,29 +139,30 @@ int main (int argc, char** argv) {
           poi_dist = ppoi_dist;
           poi = ppoi;
         }
+        if(poi_dist < 1.5f) break;
       }
 
       // float cells_bias = (float) interesting_cells / (float)GRID_SIZE;
       // float battery_bias = (float) cur_bat / (float)max_battery;
 
-      // if (cur_bat < 30) {
-      //   battery_weight = 1;
-      //   coverage_weight = 0;
-      //   info_weight = 0;
-      // } else if (interesting_cells == 0) {
-      //   battery_weight = 0.2;
-      //   coverage_weight = 1-battery_weight;
-      //   info_weight = 0;
-      // } else {
-      //   battery_weight = 0;//(1-battery_bias) * 0.1;
-      //   info_weight = (1-battery_weight);//* (1-cells_bias);
-      //   coverage_weight = 0;//(1-battery_weight-info_weight);
-      // }
+      if (cur_bat[j] < 30) {
+        battery_weight = 1;
+        coverage_weight = 0;
+        info_weight = 0;
+      } else if (interesting_cells == 0) {
+        battery_weight = 0.2;
+        coverage_weight = 1-battery_weight;
+        info_weight = 0;
+      } else {
+        battery_weight = 0;//(1-battery_bias) * 0.1;
+        info_weight = (1-battery_weight);//* (1-cells_bias);
+        coverage_weight = 0;//(1-battery_weight-info_weight);
+      }
 
       
-      battery_weight = 0.4;
-      coverage_weight = 0.5;
-      info_weight = 0.1;
+      // battery_weight = 0.3;
+      // coverage_weight = 0.0;
+      // info_weight = 0.7;
 
       control_vec.x = (optimal_charger.x - cur_loc[j].x) * battery_weight;
       control_vec.y = (optimal_charger.y - cur_loc[j].y) * battery_weight;
@@ -170,8 +173,8 @@ int main (int argc, char** argv) {
       control_vec.x += (poi.x - cur_loc[j].x) * info_weight;
       control_vec.y += (poi.y - cur_loc[j].y) * info_weight;
 
-      control_vec.x = 1;
-      control_vec.y = 0;
+      //control_vec.x = 1;
+      //control_vec.y = 0;
 
       // Ensure barriers (no collisions)
       for(k = 0; k < arena->n_robots; k++) {
@@ -197,8 +200,8 @@ int main (int argc, char** argv) {
       }
 
       int cell_index = (int)cur_loc[j].x/CELL_WIDTH+((int)cur_loc[j].y/CELL_WIDTH)*CELLS_PER_ROW;
-      if (!cur_coverage.dataGrid[cell_index]) {
-        cur_coverage.dataGrid[cell_index] = (((float)i+1)/(float)n_iterations)*255;
+      if (!cur_coverage.data[cell_index]) {
+        cur_coverage.data[cell_index] = (((float)i+1)/(float)n_iterations)*255;
       }
 
       Vec2d nextLoc;
@@ -212,7 +215,7 @@ int main (int argc, char** argv) {
       cur_loc[j] = nextLoc;
       cur_moment[j] = control_vec;
     }
-    addGridData(DATA_coverage, cur_coverage.dataGrid);
+    addGridData(DATA_coverage, cur_coverage.data);
   }
 
   // Initialize COLORS and GRADIENTS
@@ -263,7 +266,7 @@ int main (int argc, char** argv) {
        int x_lvl = (j % CELLS_PER_ROW)*CELL_WIDTH;
        int y_lvl = (j / CELLS_PER_ROW)*CELL_WIDTH;
 
-       unsigned char data = DATA_coverage->dataGrid[i].dataGrid[j];
+       unsigned char data = DATA_coverage->grids[i].data[j];
        float degree = (float)data/255.0f;
        struct ColorVec infoLvl = getColorFromGradient(&infoGradient,degree);
        if (data == 0) infoLvl = bg_clr;

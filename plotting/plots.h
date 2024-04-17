@@ -11,7 +11,7 @@
 #include "../colorvec.h"
 
 #define MAX_TS_SIZE 512
-#define GRID_SIZE 1600
+#define GRID_SIZE 100
 
 typedef struct Vec2dor {
   float x,y;
@@ -27,13 +27,13 @@ struct TimeSeries {
 
 // Data Gridde
 struct DataGrid {
-  unsigned char dataGrid[GRID_SIZE];
+  unsigned char data[GRID_SIZE];
 };
 
 // DataGrid Time series
 struct DataGridTimeSeries {
   int length;
-  struct DataGrid dataGrid[MAX_TS_SIZE];
+  struct DataGrid grids[MAX_TS_SIZE];
 };
 
 // Robot Time series: Battery, X, Y for each individual robot

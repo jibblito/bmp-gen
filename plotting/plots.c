@@ -52,7 +52,7 @@ struct DataGrid *initDataGrid(unsigned char dataGrid[GRID_SIZE]) {
   struct DataGrid *dg = malloc(dg_size);
   int i;
   for (i = 0; i < GRID_SIZE; i++) {
-    dg->dataGrid[i] = dataGrid[i];
+    dg->data[i] = dataGrid[i];
   }
   return dg;
 }
@@ -78,7 +78,7 @@ int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZ
   }
   int i;
   for (i = 0; i < GRID_SIZE; i++) {
-    dgts->dataGrid[dgts->length].dataGrid[i] = dataGrid[i];
+    dgts->grids[dgts->length].data[i] = dataGrid[i];
   }
   dgts->length = dgts->length + 1;
   return dgts->length;
