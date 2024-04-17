@@ -128,7 +128,7 @@ int main (int argc, char** argv) {
     interesting_cells = 0;
 
     for (j = 0; j < GRID_SIZE; j++) {
-      if(cur_coverage.data[j] < 255) {
+      if(cur_coverage.data[j] < 200) {
         Vec2d poi;
         poi.x = (j % CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;
         poi.y = (j / CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;

@@ -24,9 +24,13 @@ ARENA *initArena(int n_robots, int ARENA_WIDTH_IN_PIXELS) {
   // Place chargers in the arena
   int frac = ARENA_WIDTH_IN_PIXELS / a->n_chargers;
   int offset = frac / 2;
-  for (i = 0; i < a->n_chargers; i++) {
+  for (i = 0; i < 3; i++) {
     a->chargers[i].x = 0;
-    a->chargers[i].y = i*frac + offset;
+    a->chargers[i].y = i*frac*2 + offset*2;
+  }
+  for (i = 0; i < 3; i++) {
+    a->chargers[i+3].x = ARENA_WIDTH_IN_PIXELS-1;
+    a->chargers[i+3].y = i*frac*2 + offset*2;
   }
 
   // Initialize RobotTimeSeries: robots start at chargers
