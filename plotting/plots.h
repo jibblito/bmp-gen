@@ -11,7 +11,7 @@
 #include "../colorvec.h"
 
 #define MAX_TS_SIZE 512
-#define GRID_SIZE 100
+#define GRID_SIZE 400
 
 typedef struct Vec2dor {
   float x,y;
@@ -57,5 +57,8 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, struc
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame);
 
 float vectorDistance(Vec2d from, Vec2d to);
+
+float clamp255(float input);
+
 
 #endif

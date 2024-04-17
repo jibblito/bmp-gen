@@ -22,7 +22,7 @@ int main (int argc, char** argv) {
 
   // Initialize arena
 
-  int n_robots = 10;
+  int n_robots = 6;
   ARENA *arena = initArena(n_robots,ARENA_WIDTH_IN_PIXELS);
 
   // Prepare DataGrid time series
@@ -92,9 +92,9 @@ int main (int argc, char** argv) {
       for (k = 0; k < CELLS_PER_ROW; k++) {
         float closest_dist = 99999;
         int closest_dist_index = -1;
-        Vec2d cell_center = { j * CELL_WIDTH / 2, k * CELL_WIDTH / 2 };
+        Vec2d cell_center = { j * CELL_WIDTH + CELL_WIDTH/2, k * CELL_WIDTH + CELL_WIDTH/2 };
         for (l = 0; l < arena->n_robots; l++) {
-          Vec2d robot_loc = { cur_loc[j].x, cur_loc[j].y };
+          Vec2d robot_loc = cur_loc[l];
           float dist = vectorDistance(robot_loc,cell_center);
           if (dist < closest_dist){
             closest_dist = dist;
@@ -134,7 +134,7 @@ int main (int argc, char** argv) {
       float poi_dist = vectorDistance(cur_loc[j],poi);
       for (k = 1; k < interesting_cells; k++) {
         Vec2d ppoi = cells_of_interest[k];
-        float ppoi_dist = vectorDistance(cur_loc[j],poi);
+        float ppoi_dist = vectorDistance(cur_loc[j],ppoi);
         if(ppoi_dist < poi_dist) {
           poi_dist = ppoi_dist;
           poi = ppoi;
@@ -145,18 +145,18 @@ int main (int argc, char** argv) {
       // float cells_bias = (float) interesting_cells / (float)GRID_SIZE;
       // float battery_bias = (float) cur_bat / (float)max_battery;
 
-      if (cur_bat[j] < 30) {
+      if (cur_bat[j] < 40) {
         battery_weight = 1;
         coverage_weight = 0;
         info_weight = 0;
       } else if (interesting_cells == 0) {
-        battery_weight = 0.2;
+        battery_weight = 0.0;
         coverage_weight = 1-battery_weight;
         info_weight = 0;
       } else {
-        battery_weight = 0;//(1-battery_bias) * 0.1;
-        info_weight = (1-battery_weight);//* (1-cells_bias);
-        coverage_weight = 0;//(1-battery_weight-info_weight);
+        battery_weight = 0;
+        info_weight = 0.9;
+        coverage_weight = 1-info_weight;
       }
 
       
@@ -254,6 +254,18 @@ int main (int argc, char** argv) {
   printf("\nStarting bmp generation loop\n\n");
   struct Canvas *cvs;
 
+  struct DataGrid real_phi;
+  for (i = 0; i < GRID_SIZE; i++) {
+    int x = (i % CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
+    int y = (i / CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
+
+    Vec2d cell = { x, y };
+    Vec2d distribution1 = { 40, 80 };
+    float distance = vectorDistance(cell,distribution1);
+    unsigned char phi = clamp255(255-distance*5);
+    real_phi.data[i] = phi;
+  }
+
   for (i = 0; i < arena->states[0]->length; i++) {
 
      char filename[32];
@@ -267,6 +279,7 @@ int main (int argc, char** argv) {
        int y_lvl = (j / CELLS_PER_ROW)*CELL_WIDTH;
 
        unsigned char data = DATA_coverage->grids[i].data[j];
+       data = real_phi.data[j];
        float degree = (float)data/255.0f;
        struct ColorVec infoLvl = getColorFromGradient(&infoGradient,degree);
        if (data == 0) infoLvl = bg_clr;
@@ -299,3 +312,4 @@ int main (int argc, char** argv) {
   return 0;
   // END
 }
+

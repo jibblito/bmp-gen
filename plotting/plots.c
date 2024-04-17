@@ -183,3 +183,10 @@ void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, 
 float vectorDistance(Vec2d from, Vec2d to) {
   return sqrt(pow(to.x-from.x,2) + pow(to.y-from.y,2));
 }
+
+// Clamp a float
+float clamp255(float input) {
+  if (input < 1) return 1;
+  if (input > 255) return 255;
+  return input;
+}
