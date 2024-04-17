@@ -186,7 +186,7 @@ float vectorDistance(Vec2d from, Vec2d to) {
 
 // Clamp a float
 float clamp255(float input) {
-  if (input < 1) return 1;
+  if (input < 0) return 0;
   if (input > 255) return 255;
   return input;
 }

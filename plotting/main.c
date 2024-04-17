@@ -17,7 +17,7 @@ int main (int argc, char** argv) {
   int CELLS_PER_ROW, ARENA_WIDTH_IN_PIXELS, CELL_WIDTH;
 
   CELLS_PER_ROW = round(sqrt(GRID_SIZE));
-  ARENA_WIDTH_IN_PIXELS = 120 - (120 % CELLS_PER_ROW);
+  ARENA_WIDTH_IN_PIXELS = 150 - (150 % CELLS_PER_ROW);
   CELL_WIDTH = ARENA_WIDTH_IN_PIXELS / CELLS_PER_ROW;
 
   // Initialize arena
@@ -59,6 +59,44 @@ int main (int argc, char** argv) {
 
   int interesting_cells;
   Vec2d cells_of_interest[GRID_SIZE] = {0};
+
+  // Initialize Real Phi distribution
+  struct DataGrid real_phi;
+
+  int n_distributions = 3;
+  Vec2d distributions[3] = {
+    { 40, 80 },
+    { 100,10 },
+    { 33.1, 50 }
+  };
+
+  //  int n_distributions = 9;
+  //  Vec2d distributions[9] = {
+  //    { 3, 12 },
+  //    { 30,30 },
+  //    { 78, 125 },
+  //    { 28, 50 },
+  //    { 71, 50 },
+  //    { 20, 90 },
+  //    { 100, 45 },
+  //    { 124, 109 },
+  //    { 99, 8 }
+  //  };
+
+  for (i = 0; i < GRID_SIZE; i++) {
+    int x = (i % CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
+    int y = (i / CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
+
+    Vec2d cell = { x, y };
+    float distance = 0; 
+    for (j = 0; j < n_distributions; j++) {
+      float distFromDistribution = 800 / vectorDistance(cell,distributions[j]); 
+      distance += clamp255(distFromDistribution);
+      distance = clamp255(distance);
+    }
+    unsigned char phi = clamp255(distance);
+    real_phi.data[i] = phi;
+  }
 
 
   int n_iterations = 300;
@@ -240,8 +278,8 @@ int main (int argc, char** argv) {
   addColorToColorVecGradient(&greenYelRed,&red);
 
   struct ColorVec teal,blue,darkBlue;
-  initColor(&teal,0,255,240);
-  initColor(&blue,0,3,255);
+  initColor(&teal,200,255,240);
+  initColor(&blue,0,150,255);
   initColor(&darkBlue,0,2,55);
   struct ColorVecGradient infoGradient;
   infoGradient.n_colors = 0;
@@ -254,17 +292,6 @@ int main (int argc, char** argv) {
   printf("\nStarting bmp generation loop\n\n");
   struct Canvas *cvs;
 
-  struct DataGrid real_phi;
-  for (i = 0; i < GRID_SIZE; i++) {
-    int x = (i % CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
-    int y = (i / CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
-
-    Vec2d cell = { x, y };
-    Vec2d distribution1 = { 40, 80 };
-    float distance = vectorDistance(cell,distribution1);
-    unsigned char phi = clamp255(255-distance*5);
-    real_phi.data[i] = phi;
-  }
 
   for (i = 0; i < arena->states[0]->length; i++) {
 
@@ -282,7 +309,7 @@ int main (int argc, char** argv) {
        data = real_phi.data[j];
        float degree = (float)data/255.0f;
        struct ColorVec infoLvl = getColorFromGradient(&infoGradient,degree);
-       if (data == 0) infoLvl = bg_clr;
+       if (data == -1) infoLvl = bg_clr;
 
        drawRect(cvs,x_lvl,y_lvl,x_lvl+CELL_WIDTH-1,y_lvl+CELL_WIDTH-1,&infoLvl);
      }
