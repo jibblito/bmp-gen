@@ -11,7 +11,7 @@
 #include "../colorvec.h"
 
 #define MAX_TS_SIZE 512
-#define GRID_SIZE 1024
+#define GRID_SIZE 900
 
 typedef struct Vec2dor {
   float x,y;

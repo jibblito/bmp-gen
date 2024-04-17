@@ -23,4 +23,6 @@ struct ColorVecGradient {
 void addColorToColorVecGradient(struct ColorVecGradient *cvg, struct ColorVec *clr);
 struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree);
 
+struct ColorVec combineColors(struct ColorVec *a, struct ColorVec *b, float degree);
+
 #endif

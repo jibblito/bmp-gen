@@ -54,3 +54,13 @@ struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree)
   }
   return ret;
 }
+
+struct ColorVec combineColors(struct ColorVec *a, struct ColorVec *b, float degree) {
+  struct ColorVec ret;
+  if (degree < 0) degree = 0;
+  if (degree > 1) degree = 1;
+  ret.r = degree * a->r + (1-degree) * b->r;
+  ret.g = degree * a->g + (1-degree) * b->g;
+  ret.b = degree * a->b + (1-degree) * b->b;
+  return ret;
+}

@@ -9,6 +9,25 @@
 #include <math.h>
 #include <string.h>
 
+void simple_splat(struct DataGrid *dg, Vec2d loc, int CELL_WIDTH, int CELLS_PER_ROW) {
+  int cell_y_index = loc.y/CELL_WIDTH;
+  int cell_x_index = loc.x/CELL_WIDTH;
+  int i,j;
+
+  int radius = 2;
+  for (i = -1*radius; i < radius+1; i++) {
+    if (cell_x_index + i < 0 || cell_x_index + i > CELLS_PER_ROW-1) continue;
+
+    for (j = -1*radius; j < radius+1; j++) {
+      if (cell_y_index + j < 0 || cell_y_index + j > CELLS_PER_ROW-1) continue;
+      int full_index = cell_x_index+i + (cell_y_index+j)*CELLS_PER_ROW;
+      float current = dg->data[full_index];
+      float potential = current/4 + 255 - 30*abs(i) - 30*abs(j);
+      if (current < potential) dg->data[full_index] = clamp255(potential);
+    }
+  }
+}
+
 int main (int argc, char** argv) {
 
   int i,j,k,l;
@@ -109,7 +128,7 @@ int main (int argc, char** argv) {
     interesting_cells = 0;
 
     for (j = 0; j < GRID_SIZE; j++) {
-      if(cur_coverage.data[j] == 0) {
+      if(cur_coverage.data[j] < 255) {
         Vec2d poi;
         poi.x = (j % CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;
         poi.y = (j / CELLS_PER_ROW) * CELL_WIDTH + CELL_WIDTH/2;
@@ -237,10 +256,7 @@ int main (int argc, char** argv) {
         control_vec.y = 0;
       }
 
-      int cell_index = (int)cur_loc[j].x/CELL_WIDTH+((int)cur_loc[j].y/CELL_WIDTH)*CELLS_PER_ROW;
-      if (!cur_coverage.data[cell_index]) {
-        cur_coverage.data[cell_index] = (((float)i+1)/(float)n_iterations)*255;
-      }
+      simple_splat(&cur_coverage,cur_loc[j],CELL_WIDTH,CELLS_PER_ROW);
 
       Vec2d nextLoc;
       nextLoc.x = cur_loc[j].x + control_vec.x;
@@ -305,13 +321,14 @@ int main (int argc, char** argv) {
        int x_lvl = (j % CELLS_PER_ROW)*CELL_WIDTH;
        int y_lvl = (j / CELLS_PER_ROW)*CELL_WIDTH;
 
-       unsigned char data = DATA_coverage->grids[i].data[j];
-       data = real_phi.data[j];
-       float degree = (float)data/255.0f;
+       unsigned char coverage_data = DATA_coverage->grids[i].data[j];
+       unsigned char phi_data = real_phi.data[j];
+       float degree = (float)phi_data/255.0f;
        struct ColorVec infoLvl = getColorFromGradient(&infoGradient,degree);
-       if (data == -1) infoLvl = bg_clr;
+       float exploration_degree = (float)coverage_data/255;
+       struct ColorVec displayLvl = combineColors(&infoLvl,&bg_clr,exploration_degree);
 
-       drawRect(cvs,x_lvl,y_lvl,x_lvl+CELL_WIDTH-1,y_lvl+CELL_WIDTH-1,&infoLvl);
+       drawRect(cvs,x_lvl,y_lvl,x_lvl+CELL_WIDTH-1,y_lvl+CELL_WIDTH-1,&displayLvl);
      }
 
      drawLine(cvs,0,0,0,cvs->height,&axis_clr);
