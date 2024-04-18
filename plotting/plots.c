@@ -180,8 +180,13 @@ void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, 
 }
 
 // Find vector distance
-float vectorDistance(Vec2d from, Vec2d to) {
-  return sqrt(pow(to.x-from.x,2) + pow(to.y-from.y,2));
+float vectorDistance(Vec2d *from, Vec2d *to) {
+  return sqrt(pow(to->x-from->x,2) + pow(to->y-from->y,2));
+}
+
+// Find length of a vector
+float vectorScale(Vec2d *vec) {
+  return sqrt(pow(vec->x,2)+pow(vec->y,2));
 }
 
 // Clamp a float

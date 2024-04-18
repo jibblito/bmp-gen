@@ -14,7 +14,7 @@
 
 typedef struct Arena {
   int n_robots, max_battery, n_chargers;
-  float robot_speed;
+  float robot_speed, residual_battery_loss;
   struct RobotTimeSeries *states[MAX_ROBOTS];
   Vec2d chargers[MAX_ROBOTS];
 } ARENA;

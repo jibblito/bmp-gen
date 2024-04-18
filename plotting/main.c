@@ -22,7 +22,7 @@ void simple_splat(struct DataGrid *dg, Vec2d loc, int CELL_WIDTH, int CELLS_PER_
       if (cell_y_index + j < 0 || cell_y_index + j > CELLS_PER_ROW-1) continue;
       int full_index = cell_x_index+i + (cell_y_index+j)*CELLS_PER_ROW;
       float current = dg->data[full_index];
-      float potential = current/4 + 255 - 30*abs(i) - 30*abs(j);
+      float potential = current + 255 - 80*abs(i) - 80*abs(j);
       if (current < potential) dg->data[full_index] = clamp255(potential);
     }
   }
@@ -82,25 +82,37 @@ int main (int argc, char** argv) {
   // Initialize Real Phi distribution
   struct DataGrid real_phi;
 
-  int n_distributions = 3;
-  Vec2d distributions[3] = {
-    { 40, 80 },
-    { 100,10 },
-    { 33.1, 50 }
-  };
+  /**
+   int n_distributions = 3;
+   Vec2d distributions[3] = {
+     { 40, 80 },
+     { 100,10 },
+     { 33.1, 50 }
+   };
+   */
 
-  //  int n_distributions = 9;
-  //  Vec2d distributions[9] = {
-  //    { 3, 12 },
-  //    { 30,30 },
-  //    { 78, 125 },
-  //    { 28, 50 },
-  //    { 71, 50 },
-  //    { 20, 90 },
-  //    { 100, 45 },
-  //    { 124, 109 },
-  //    { 99, 8 }
-  //  };
+   /*
+   int n_distributions = 9;
+   Vec2d distributions[9] = {
+       { 3, 12 },
+       { 30,30 },
+       { 78, 125 },
+       { 28, 50 },
+       { 71, 50 },
+       { 20, 90 },
+       { 100, 45 },
+       { 124, 109 },
+       { 99, 8 }
+   };
+   */
+
+   
+   int n_distributions = 2;
+   Vec2d distributions[2] = {
+     { 1, 1 },
+     { 120,120 }
+   };
+   
 
   for (i = 0; i < GRID_SIZE; i++) {
     int x = (i % CELLS_PER_ROW)*CELL_WIDTH + CELL_WIDTH/2;
@@ -109,7 +121,7 @@ int main (int argc, char** argv) {
     Vec2d cell = { x, y };
     float distance = 0; 
     for (j = 0; j < n_distributions; j++) {
-      float distFromDistribution = 800 / vectorDistance(cell,distributions[j]); 
+      float distFromDistribution = 800 / vectorDistance(&cell,&distributions[j]); 
       distance += clamp255(distFromDistribution);
       distance = clamp255(distance);
     }
@@ -118,7 +130,7 @@ int main (int argc, char** argv) {
   }
 
 
-  int n_iterations = 300;
+  int n_iterations = 500;
 
   // Loop each iteration
   for (i = 0; i <= n_iterations; i++) {
@@ -145,23 +157,28 @@ int main (int argc, char** argv) {
       cell_count[j] = 0;
     }
 
-    for (j = 0; j < CELLS_PER_ROW; j++) {
-      for (k = 0; k < CELLS_PER_ROW; k++) {
-        float closest_dist = 99999;
-        int closest_dist_index = -1;
-        Vec2d cell_center = { j * CELL_WIDTH + CELL_WIDTH/2, k * CELL_WIDTH + CELL_WIDTH/2 };
-        for (l = 0; l < arena->n_robots; l++) {
-          Vec2d robot_loc = cur_loc[l];
-          float dist = vectorDistance(robot_loc,cell_center);
-          if (dist < closest_dist){
-            closest_dist = dist;
-            closest_dist_index = l;
-          }
+
+    for (j = 0; j < GRID_SIZE; j++) {
+      int x = (j % CELLS_PER_ROW);
+      int y = (j / CELLS_PER_ROW);
+      
+      float closest_dist = 99999;
+      int closest_dist_index = -1;
+      Vec2d cell_center = { x * CELL_WIDTH + CELL_WIDTH/2, y * CELL_WIDTH + CELL_WIDTH/2 };
+      int significance = real_phi.data[j];
+
+      for (k = 0; k < arena->n_robots; k++) {
+        if (cur_bat[k] <= 0) continue;
+        Vec2d robot_loc = cur_loc[k];
+        float dist = vectorDistance(&robot_loc,&cell_center);
+        if (dist < closest_dist){
+          closest_dist = dist;
+          closest_dist_index = k;
         }
-        weights_x[closest_dist_index] += cell_center.x;
-        weights_y[closest_dist_index] += cell_center.y;
-        cell_count[closest_dist_index] += 1;
       }
+      weights_x[closest_dist_index] += cell_center.x * significance;
+      weights_y[closest_dist_index] += cell_center.y * significance;
+      cell_count[closest_dist_index] += significance;
     }
 
     // Assign centroids (centers of mass)
@@ -188,10 +205,10 @@ int main (int argc, char** argv) {
 
       // Find best cell to seek to (Seeking)
       poi = cells_of_interest[0];
-      float poi_dist = vectorDistance(cur_loc[j],poi);
+      float poi_dist = vectorDistance(&cur_loc[j],&poi);
       for (k = 1; k < interesting_cells; k++) {
         Vec2d ppoi = cells_of_interest[k];
-        float ppoi_dist = vectorDistance(cur_loc[j],ppoi);
+        float ppoi_dist = vectorDistance(&cur_loc[j],&ppoi);
         if(ppoi_dist < poi_dist) {
           poi_dist = ppoi_dist;
           poi = ppoi;
@@ -208,18 +225,17 @@ int main (int argc, char** argv) {
         info_weight = 0;
       } else if (interesting_cells == 0) {
         battery_weight = 0.0;
-        coverage_weight = 1-battery_weight;
+        coverage_weight = 1;
         info_weight = 0;
+      } else if (cur_bat[j] < 50) {
+        battery_weight = 0.5;
+        info_weight = 0.5;
+        coverage_weight = 0.0;
       } else {
         battery_weight = 0;
         info_weight = 0.9;
         coverage_weight = 1-info_weight;
       }
-
-      
-      // battery_weight = 0.3;
-      // coverage_weight = 0.0;
-      // info_weight = 0.7;
 
       control_vec.x = (optimal_charger.x - cur_loc[j].x) * battery_weight;
       control_vec.y = (optimal_charger.y - cur_loc[j].y) * battery_weight;
@@ -236,7 +252,7 @@ int main (int argc, char** argv) {
       // Ensure barriers (no collisions)
       for(k = 0; k < arena->n_robots; k++) {
         if(k != j) {
-          float barrier_dist = vectorDistance(cur_loc[j],cur_loc[k]);
+          float barrier_dist = vectorDistance(&cur_loc[j],&cur_loc[k]);
           if(barrier_dist < 1.0f) {
             control_vec.x = -5 * cur_moment[j].x;
             control_vec.y = -5 * cur_moment[j].y;
@@ -251,6 +267,7 @@ int main (int argc, char** argv) {
         cur_bat[j] = arena->max_battery+1;
       }
 
+      // Robot Death!
       if (cur_bat[j] <= 0.0f) {
         control_vec.x = 0;
         control_vec.y = 0;
@@ -263,11 +280,14 @@ int main (int argc, char** argv) {
       nextLoc.y = cur_loc[j].y + control_vec.y;
       validateLoc(&nextLoc,ARENA_WIDTH_IN_PIXELS);
 
-      addRtsData(robot,cur_bat[j]-1,nextLoc,control_vec);
+      float battery_expense = vectorScale(&control_vec)/arena->robot_speed + arena->residual_battery_loss;
 
-      cur_bat[j] = cur_bat[j]-1;
+      cur_bat[j] = cur_bat[j]-battery_expense;
       cur_loc[j] = nextLoc;
       cur_moment[j] = control_vec;
+
+      addRtsData(robot,cur_bat[j],cur_loc[j],cur_moment[j]);
+
     }
     addGridData(DATA_coverage, cur_coverage.data);
   }
@@ -341,6 +361,9 @@ int main (int argc, char** argv) {
       float degree = battery/(float)arena->max_battery;
       struct ColorVec battery_lvl = getColorFromGradient(&greenToRed,degree);
       graphRobotTimeSeriesFrame(cvs,arena->states[j],0,&battery_lvl,i);
+      for (k = 0; k < ARENA_WIDTH_IN_PIXELS; k++) {
+        
+      }
     }
 
     for (j = 0; j < arena->n_chargers; j++) {
