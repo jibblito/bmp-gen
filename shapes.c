@@ -122,7 +122,7 @@ int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec*
   int i;
   float slope = (float)y_range/(float)x_range;
   if (abs(x_range) > abs(y_range)) {
-    for (i = 0; i < x_range; i++) {
+    for (i = 0; i <= x_range; i++) {
       int rel_y = (int)roundf(slope * (float)i);
       plot(cvs,x_start+i,y_start+rel_y,clr);
     }

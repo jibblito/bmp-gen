@@ -171,11 +171,15 @@ void graphRobotTimeSeries(struct Canvas *cvs, struct RobotTimeSeries *rts, struc
 void graphRobotTimeSeriesFrame(struct Canvas *cvs, struct RobotTimeSeries *rts, int draw_bg, struct ColorVec *fn_clr, int frame) {
   int x = rts->loc[frame].x;
   int y = rts->loc[frame].y;
+  struct ColorVec arrowColor;
+  initColor(&arrowColor,255,0,0);
+  Vec2d moment = rts->moment[frame];
   if (rts->battery[frame] <= 0.0f) {
     drawLine(cvs,x-2,y-2,x+3,y+3,fn_clr);
     drawLine(cvs,x-2,y+2,x+2,y-2,fn_clr);
   } else {
     etchCircle(cvs,x,y,3,fn_clr);
+    drawLine(cvs,x,y,x+moment.x,y+moment.y,&arrowColor);
   }
 }
 

@@ -38,7 +38,8 @@ ARENA *initArena(int n_robots, int ARENA_WIDTH_IN_PIXELS) {
   for (i = 0; i < a->n_robots; i++) {
     a->states[i] = initRobotTimeSeries(NULL);
     Vec2d noMovement = { 0,0 };
-    addRtsData(a->states[i],a->max_battery,a->chargers[i],noMovement);
+    if (i == 3 || i == 4) addRtsData(a->states[i],a->max_battery/2,a->chargers[i],noMovement);
+    else addRtsData(a->states[i],a->max_battery,a->chargers[i],noMovement);
   }
 
   return a;

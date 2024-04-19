@@ -30,6 +30,13 @@ void simple_splat(struct DataGrid *dg, Vec2d loc, int CELL_WIDTH, int CELLS_PER_
 
 int main (int argc, char** argv) {
 
+  // Modes:
+  //  0 : Coverage + Learning + Battery
+  //  1 : Coverage + Learning
+  //  2 : Coverage + Battery
+  //
+  int mode = 0;
+
   int i,j,k,l;
   // Constants for calculating centroid and display cells
 
@@ -82,14 +89,12 @@ int main (int argc, char** argv) {
   // Initialize Real Phi distribution
   struct DataGrid real_phi;
 
-  /**
    int n_distributions = 3;
    Vec2d distributions[3] = {
      { 40, 80 },
      { 100,10 },
      { 33.1, 50 }
    };
-   */
 
    /*
    int n_distributions = 9;
@@ -107,11 +112,13 @@ int main (int argc, char** argv) {
    */
 
    
+   /*
    int n_distributions = 2;
    Vec2d distributions[2] = {
      { 1, 1 },
      { 120,120 }
    };
+   */
    
 
   for (i = 0; i < GRID_SIZE; i++) {
@@ -199,7 +206,18 @@ int main (int argc, char** argv) {
     for (j = 0; j < arena->n_robots; j++) {
 
       robot = arena->states[j];
-      optimal_charger = arena->chargers[j];
+
+      float optimalChargerDist= 99999;
+      int optimalChargerIndex = -1;
+      // Find closest Charger
+      for (k = 0; k < arena->n_robots; k++) {
+        float potentialDist = vectorDistance(&cur_loc[j],&arena->chargers[k]);
+        if (potentialDist < optimalChargerDist) {
+          optimalChargerDist = potentialDist;
+          optimalChargerIndex = k;
+        }
+      }
+      optimal_charger = arena->chargers[optimalChargerIndex];
       centroid = centroids[j];
       Vec2d control_vec;
 
@@ -219,22 +237,52 @@ int main (int argc, char** argv) {
       // float cells_bias = (float) interesting_cells / (float)GRID_SIZE;
       // float battery_bias = (float) cur_bat / (float)max_battery;
 
-      if (cur_bat[j] < 40) {
-        battery_weight = 1;
-        coverage_weight = 0;
-        info_weight = 0;
-      } else if (interesting_cells == 0) {
-        battery_weight = 0.0;
-        coverage_weight = 1;
-        info_weight = 0;
-      } else if (cur_bat[j] < 50) {
-        battery_weight = 0.5;
-        info_weight = 0.5;
-        coverage_weight = 0.0;
+    
+      int battery_threshold = 30;
+      if (mode == 0) {
+        if (cur_bat[j] < battery_threshold) {
+          battery_weight = 1;
+          coverage_weight = 0;
+          info_weight = 0;
+        } else if (interesting_cells == 0) {
+          battery_weight = 0.0;
+          coverage_weight = 1;
+          info_weight = 0;
+        } else if (cur_bat[j] < 50) {
+          battery_weight = 0.5;
+          info_weight = 0.5;
+          coverage_weight = 0.0;
+        } else {
+          battery_weight = 0;
+          info_weight = 0.9;
+          coverage_weight = 1-info_weight;
+        }
+      } else if (mode == 1) {
+        if (cur_bat[j] < battery_threshold) {
+          battery_weight = 1;
+          coverage_weight = 0;
+          info_weight = 0;
+        } else if (interesting_cells == 0) {
+          battery_weight = 0.0;
+          coverage_weight = 1;
+          info_weight = 0;
+        } else {
+          battery_weight = 0;
+          info_weight = 0.9;
+          coverage_weight = 1-info_weight;
+        }
       } else {
-        battery_weight = 0;
-        info_weight = 0.9;
-        coverage_weight = 1-info_weight;
+        if (cur_bat[j] < battery_threshold) {
+          battery_weight = 1;
+          coverage_weight = 0;
+          info_weight = 0;
+        } else if (cur_bat[j] < 50) {
+          battery_weight = 0.5;
+          coverage_weight = 0.5;
+        } else {
+          battery_weight = 0;
+          coverage_weight = 1;
+        }
       }
 
       control_vec.x = (optimal_charger.x - cur_loc[j].x) * battery_weight;
@@ -260,10 +308,11 @@ int main (int argc, char** argv) {
         }
       }
 
+
       normalizeVector(&control_vec);
       scaleVector(&control_vec,arena->robot_speed);
 
-      if (roundf(cur_loc[j].x) == optimal_charger.x && roundf(cur_loc[j].y) == optimal_charger.y) {
+      if (vectorDistance(&cur_loc[j],&optimal_charger) < 2 && i > 30) {
         cur_bat[j] = arena->max_battery+1;
       }
 
@@ -361,9 +410,6 @@ int main (int argc, char** argv) {
       float degree = battery/(float)arena->max_battery;
       struct ColorVec battery_lvl = getColorFromGradient(&greenToRed,degree);
       graphRobotTimeSeriesFrame(cvs,arena->states[j],0,&battery_lvl,i);
-      for (k = 0; k < ARENA_WIDTH_IN_PIXELS; k++) {
-        
-      }
     }
 
     for (j = 0; j < arena->n_chargers; j++) {
@@ -372,6 +418,64 @@ int main (int argc, char** argv) {
     }
     generateBitmapImage(cvs);
   }
+
+  // Gather Data!
+
+  printf("Gathering Data from simulation for %d iterations...\n",n_iterations);
+
+  FILE* csvFile = fopen("Simulation_Stats.csv", "wb");
+  char buf[128] = { 0 };
+  sprintf(buf,"LocationalCost,MapUncovered,MeanEnergy,CumulativeDistance\n");
+  fwrite(buf, 1, strlen(buf), csvFile);
+  memset(buf,'\0',128);
+
+  float cumulativeDistance = 0;
+
+  for (i = 0; i < arena->states[0]->length; i++) {
+
+    // Locational Cost: Distance from each distribution to nearest robot
+    float locationalCost = 0;
+    for (j = 0; j < n_distributions; j++) {
+      float shortest_distance = vectorDistance(&distributions[j],&arena->states[0]->loc[i]);
+      for (k = 1; k < arena->n_robots; k++) {
+        float robot_distance = vectorDistance(&distributions[j],&arena->states[k]->loc[i]);
+        if (robot_distance < shortest_distance) shortest_distance = robot_distance;
+      }
+      locationalCost += shortest_distance;
+    }
+
+    // MapUncovered: Percentage of map uncovered
+    float explorationCost = 0;
+    for (j = 0; j < GRID_SIZE; j++) {
+      unsigned char coverage_data = DATA_coverage->grids[i].data[j];
+      float exploration_degree = 1 - (float)coverage_data/255;
+      explorationCost += exploration_degree;
+    }
+    explorationCost = explorationCost / (float)GRID_SIZE;
+    explorationCost = explorationCost * 100.0f;
+
+    // Energy Mean: Mean energy level of all robots
+
+    float energyMean = 0;
+    float energySum = 0;
+    for (j = 0; j < arena->n_robots; j++) {
+      float battery = arena->states[j]->battery[i];
+      energySum += battery;
+    }
+    energyMean = energySum / (float)arena->n_robots;
+
+    // Cumulative Distance: Distance traveled by all robots
+    float distanceCost = 0;
+    for (j = 0; j < arena->n_robots; j++) {
+      float distanceCovered = vectorScale(&arena->states[j]->moment[i]);
+      cumulativeDistance += distanceCovered;
+    }
+
+    sprintf(buf,"%3.3f,%3.3f,%3.3f,%3.3f\n",locationalCost,explorationCost,energyMean,cumulativeDistance);
+    fwrite(buf, 1, strlen(buf), csvFile);
+  }
+  fclose(csvFile);
+  printf("simulation data written to Simulation_Stats.csv\n");
 
   // END
   destroyArena(arena);
