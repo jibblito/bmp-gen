@@ -18,14 +18,63 @@ int main (int argc, char** argv) {
   int ARENA_WIDTH_IN_PIXELS = 150;
   ARENA_WIDTH_IN_PIXELS = 150;
 
-  int n_robots = 3;
+  // Initialize Task Locations
+  
+  /*
+  int n_tasks = 3;
+  Vec2d tasks_1[3] = {
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3},
+     {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*1},
+     {ARENA_WIDTH_IN_PIXELS/4*3,ARENA_WIDTH_IN_PIXELS/4*1}
+  };
+  Vec2d tasks_2[3] = {
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*1},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*2},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3}
+  };
+  float pi_desired[3] = {
+    0.33, 0.33, 0.33
+  };
+  */
+
+  /*
+  int n_tasks = 2;
+  Vec2d tasks_1[2] = {
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/3*1},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/3*2}
+  };
+  Vec2d tasks_2[2] = {
+     {ARENA_WIDTH_IN_PIXELS/3*1,ARENA_WIDTH_IN_PIXELS/2},
+     {ARENA_WIDTH_IN_PIXELS/3*2,ARENA_WIDTH_IN_PIXELS/2}
+  };
+  float pi_desired[2] = {
+    0.5,0.5
+  };
+  */
+
+  int n_tasks = 4;
+  Vec2d tasks_1[4] = {
+     {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*1},
+     {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*3},
+     {ARENA_WIDTH_IN_PIXELS/4*3,ARENA_WIDTH_IN_PIXELS/4*1},
+     {ARENA_WIDTH_IN_PIXELS/4*3,ARENA_WIDTH_IN_PIXELS/4*3}
+  };
+  Vec2d tasks_2[4] = {
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/5*1},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/5*2},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/5*3},
+     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/5*4}
+  };
+  float pi_desired[4] = {
+    0.25,0.25,0.25,0.25
+  };
+
+  int n_robots = n_tasks;
+
   ARENA *arena = initArena(n_robots,ARENA_WIDTH_IN_PIXELS,1);
 
-  float K = 10;
-  float max_slack = 10, min_slack = 0;
-  float slack_increment = 0.2;
-
-  float alpha[ALPHA_RESOLUTION][MAX_ROBOTS][MAX_TASKS] = { 0 };
+  float max_slack = 100, min_slack = 1;
+  float slack_factor = 10;
 
   // Slack for all robots for all tasks;
   float slack[MAX_ROBOTS][MAX_TASKS] = { 0 };
@@ -35,52 +84,10 @@ int main (int argc, char** argv) {
   int initial_tasks_status[MAX_TASKS] = { 0 };
   addTaskData(DATA_tasks,initial_tasks_status);
 
-  // Initialize Task Locations
-
-  
-  int n_tasks = 3;
-  Vec2d tasks[3] = {
-     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3},
-     {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/4*3,ARENA_WIDTH_IN_PIXELS/4*1}
-  };
-  float pi_desired[3] = {
-    0.33, 0.33, 0.33
-  };
-  
-
-  /*
-  int n_tasks = 15;
-  Vec2d tasks[15] = {
-     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/6*2,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/6*4,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/6*2,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/6*4,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/4*3},
-     {ARENA_WIDTH_IN_PIXELS/6*2,ARENA_WIDTH_IN_PIXELS/4*3},
-     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/4*3},
-     {ARENA_WIDTH_IN_PIXELS/6*4,ARENA_WIDTH_IN_PIXELS/4*3},
-     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/4*3},
-  };
-  float pi_desired[15] = {
-    0.1, 0.1, 0.1, 0.1, 0.1,
-    0.5, 0.5, 0.5, 0.5, 0.5,
-    0.5, 0.5, 0.5, 0.5, 0.5
-  };
-  */
-
-
-
   // Set initial slack
   for (i = 0; i < arena->n_robots; i++) {
     for (j = 0; j < n_tasks; j++) {
-      slack[i][j] = 5;
+      slack[i][j] = max_slack / 2;
     }
   }
 
@@ -96,47 +103,105 @@ int main (int argc, char** argv) {
     cur_tasks_status[i] = DATA_tasks->states[0][i];
   }
 
-  int n_iterations = 100;
+  int n_iterations = 200;
+
+  Vec2d *tasks = tasks_1;
 
   // Loop each iteration
   for (i = 0; i <= n_iterations; i++) {
 
-    struct RobotTimeSeries *robot;
-
-    // For each task, adjust slack based on nearest robots
-    for (j = 0; j < n_tasks; j++) {
-      int tokens = roundf(pi_desired[j] * (float)n_robots);    
-      int robotsSelected[MAX_ROBOTS] = {0};
-      while (tokens > 0) {
-        float closestDist = 99999, potentialDist;
-        int selectedIndex = 0;
-        for (k = 0; k < arena->n_robots; k++) {
-          if (robotsSelected[k] == 1) continue;
-          potentialDist = vectorDistance(&cur_loc[k],&tasks[j]);
-          if (potentialDist < closestDist) {
-            closestDist = potentialDist;
-            selectedIndex = k;
-          }
-        }
-        robotsSelected[selectedIndex] = 1; // Mark robot as selected
-        tokens--;
+    if(i == n_iterations/2) {
+      tasks = tasks_2;
+      for (j = 0; j < n_tasks; j++) {
+        cur_tasks_status[j] = 0;
       }
-      for (k = 0; k < arena->n_robots; k++) {
-        if (robotsSelected[k] == 1) {
-          if (slack[k][j] > 0) {
-            slack[k][j] -= slack_increment; // Decrease slack on selected robot
+    }
+
+    int pi[MAX_TASKS];
+    for (j = 0; j < MAX_TASKS; j++) pi[j] = -1;
+    int alpha[MAX_ROBOTS] = {0};
+    for (j = 0; j < MAX_ROBOTS; j++) alpha[j] = -1;
+
+    // For each robot, adjust slack based on nearest tasks
+    for (j = 0; j < arena->n_robots; j++) {
+      float distance_robot_to_task;
+      float taskDistances[MAX_TASKS] = {0};
+      float max_dist = 0, min_dist = 99999;
+
+      // Will add a metric to weights: the closer a robot is, the higher its weight (alpha)
+      int closest_task_index = -1;
+      for (k = 0; k < n_tasks; k++) {
+        distance_robot_to_task = vectorDistance(&cur_loc[j],&tasks[k]);
+        taskDistances[k] = distance_robot_to_task;
+        if (distance_robot_to_task > max_dist) max_dist = distance_robot_to_task;
+        if (distance_robot_to_task < min_dist) {
+          min_dist = distance_robot_to_task;
+          closest_task_index = k;
+        }
+      }
+
+      alpha[j] = closest_task_index; // assign that task to the robot
+      pi[closest_task_index] = j; // assign that robot to the task 
+      float range = max_dist - min_dist;
+
+      float taskDistanceRelativeWeights[MAX_TASKS] = {0};
+      for (k = 0; k < n_tasks; k++) {
+        float relativeWeight = (taskDistances[k] - min_dist) / range; // (0-1) := (shortest-longest)
+        relativeWeight -= 0.1; // (-0.5,0.5) := (shortest,longest)
+        taskDistanceRelativeWeights[k] = relativeWeight;
+      }
+
+      for (k = 0; k < n_tasks; k++) {
+        slack[j][k] += slack_factor * taskDistanceRelativeWeights[k]; 
+        if (slack[j][k] > max_slack) slack[j][k] = max_slack;
+        if (slack[j][k] < min_slack) slack[j][k] = min_slack;
+      }
+    }
+
+    // Correct for Pi (Make sure all tasks are assigned)
+    float pi_actual[MAX_TASKS] = { 0 };
+    for (j = 0; j < arena->n_robots; j++) {
+      pi_actual[alpha[j]] += 1.0f/(float)arena->n_robots;
+    }
+    
+    for (k = 0; k < n_tasks; k++) {
+      if (pi_actual[k] > (pi_desired[k] + 0.05)) {
+        while (pi_actual[k] > (pi_desired[k] + 0.05)) {
+          float alpha_distances[MAX_ROBOTS];
+          float furthest_robot_distance = 0;
+          int furthest_robot_index = -1;
+          for (j = 0; j < arena->n_robots; j++) {
+            if (alpha[j] == k) {
+              float distance = vectorDistance(&cur_loc[j],&tasks[k]);
+              if (distance > furthest_robot_distance) {
+                furthest_robot_distance = distance;
+                furthest_robot_index = j;
+              }
+            }
           }
-        } else if (robotsSelected[k] == 0) {
-          if (slack[k][j] < max_slack) {
-            slack[k][j] += slack_increment; // Increase slack on unselected robot
+          alpha[furthest_robot_index] = -1;
+          pi_actual[k] = pi_actual[k] - (1.0f/(float)arena->n_robots);
+          slack[furthest_robot_index][k] = max_slack;
+        }
+      }
+    }
+
+    // For each robot, adjust slack based on empty jobs
+    for (k = 0; k < n_tasks; k++) {
+      for(j = 0; j < arena->n_robots; j++) {
+        if (alpha[j] == -1) {
+          if (pi[k] == -1) {
+            slack[j][k] = min_slack;
+          } else {
+            slack[j][k] = max_slack;
           }
         }
       }
     }
 
-    printf("Slack Time!");
 
-    float circleRadius = 5;
+    // probe potential moments to satisfy choosing u_i for moment
+    float circleRadius = 3;
     int circleResolution = 12;
     for (j = 0; j < arena->n_robots; j++) {
       Vec2d target = cur_loc[j];
@@ -152,10 +217,21 @@ int main (int argc, char** argv) {
         for (l = 0; l < n_tasks; l++) {
           float distanceRatio = vectorDistance(&cur_loc[j],&tasks[l]) / circleRadius;
           if (distanceRatio < 1) {
-            scaleVector(&potentialTarget,distanceRatio); // Scale down so as to not miss task
+            float diff_x = potentialTarget.x - cur_loc[j].x;
+            float diff_y = potentialTarget.y - cur_loc[j].y;
+            diff_x = diff_x * distanceRatio;
+            diff_y = diff_y * distanceRatio;
+            potentialTarget.x = cur_loc[j].x + diff_x;
+            potentialTarget.y =  cur_loc[j].y + diff_y;
           }
-          costSummationAllTasks += vectorDistance(&potentialTarget,&tasks[l]);
-          costSummationAllTasks += slack[j][l];
+          if(distanceRatio * circleRadius < 1) {
+            potentialTarget = cur_loc[j];
+            cur_tasks_status[l] = 1;
+          } 
+          float distanceToTask = vectorDistance(&potentialTarget,&tasks[l]);
+          float slackOfTask = slack[j][l];
+          float summation = distanceToTask * (max_slack-slackOfTask);
+          costSummationAllTasks += summation;
         }
 
         // Compare cost sum to lowest cost; if lower, assign that target to the robot
@@ -163,24 +239,26 @@ int main (int argc, char** argv) {
           lowestCost = costSummationAllTasks;
           target = potentialTarget;
         }
-
-        Vec2d control_vec;
-        normalizeVector(&target);
-        scaleVector(&target,arena->robot_speed);
-
-        robot = arena->states[j];
-
-        Vec2d nextLoc;
-
-        nextLoc.x = cur_loc[j].x + target.x;
-        nextLoc.y = cur_loc[j].y + target.y;
-        validateLoc(&nextLoc,ARENA_WIDTH_IN_PIXELS);
-
-        cur_loc[j] = nextLoc;
-        cur_moment[j] = target;
-
-        addRtsData(robot,100,cur_loc[j],cur_moment[j]);
       }
+
+      struct RobotTimeSeries *robot = arena->states[j];
+      
+      Vec2d control_vec = { 0 };
+      control_vec.x = target.x - cur_loc[j].x;
+      control_vec.y = target.y - cur_loc[j].y;
+
+      normalizeVector(&control_vec);
+      scaleVector(&control_vec,arena->robot_speed);
+
+      Vec2d nextLoc;
+      nextLoc.x = cur_loc[j].x + control_vec.x;
+      nextLoc.y = cur_loc[j].y + control_vec.y;
+      validateLoc(&nextLoc,ARENA_WIDTH_IN_PIXELS);
+
+      cur_loc[j] = nextLoc;
+      cur_moment[j] = control_vec;
+
+      addRtsData(robot,100,cur_loc[j],cur_moment[j]);
     }
 
     addTaskData(DATA_tasks,cur_tasks_status);
@@ -208,19 +286,23 @@ int main (int argc, char** argv) {
   printf("\nStarting bmp generation loop\n\n");
   struct Canvas *cvs;
 
+  tasks = tasks_1;
   for (i = 0; i < arena->states[0]->length; i++) {
+    if(i == n_iterations/2) {
+      tasks = tasks_2;
+    }
 
-     char filename[32];
-     sprintf(filename,"out/00%d.bmp\0",i);
-     if (i > 9) sprintf(filename,"out/0%d.bmp\0",i);
-     if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
-     cvs = initCanvas(ARENA_WIDTH_IN_PIXELS,ARENA_WIDTH_IN_PIXELS,filename);
+    char filename[32];
+    sprintf(filename,"out/00%d.bmp\0",i);
+    if (i > 9) sprintf(filename,"out/0%d.bmp\0",i);
+    if (i > 99) sprintf(filename,"out/%d.bmp\0",i);
+    cvs = initCanvas(ARENA_WIDTH_IN_PIXELS,ARENA_WIDTH_IN_PIXELS,filename);
 
-     drawRect(cvs,0,0,ARENA_WIDTH_IN_PIXELS,ARENA_WIDTH_IN_PIXELS,&yellow);
-     drawLine(cvs,0,0,0,cvs->height,&axis_clr);
-     drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
-     drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
-     drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
+    drawRect(cvs,0,0,ARENA_WIDTH_IN_PIXELS,ARENA_WIDTH_IN_PIXELS,&yellow);
+    drawLine(cvs,0,0,0,cvs->height,&axis_clr);
+    drawLine(cvs,0,cvs->height-1,cvs->width-1,cvs->height-1,&axis_clr);
+    drawLine(cvs,cvs->width-1,cvs->height-1,cvs->width-1,0,&axis_clr);
+    drawLine(cvs,cvs->width-1,0,0,0,&axis_clr);
 
     for (j = 0; j < arena->n_robots; j++) {
       graphRobotTimeSeriesFrame(cvs,arena->states[j],0,&darkBlue,i);

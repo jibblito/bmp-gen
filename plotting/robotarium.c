@@ -21,7 +21,7 @@ ARENA *initArena(int n_robots, int ARENA_WIDTH_IN_PIXELS, int mode) {
   a->n_robots = n_robots;
   a->max_battery = 100;
   a->n_chargers = n_robots;
-  a->robot_speed = 3.5;
+  a->robot_speed = 2;
   a->residual_battery_loss = 0.1;
 
   int i;
