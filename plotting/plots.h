@@ -12,6 +12,7 @@
 
 #define MAX_TS_SIZE 512
 #define GRID_SIZE 1600
+#define MAX_TASKS 20
 
 typedef struct Vec2dor {
   float x,y;
@@ -36,6 +37,12 @@ struct DataGridTimeSeries {
   struct DataGrid grids[MAX_TS_SIZE];
 };
 
+// Task Time series
+struct TaskTimeSeries {
+  int length;
+  int states[MAX_TS_SIZE][MAX_TASKS];
+};
+
 // Robot Time series: Battery, X, Y for each individual robot
 struct RobotTimeSeries {
   int length;
@@ -50,6 +57,9 @@ struct DataGrid *initDataGrid(unsigned char dataGrid[GRID_SIZE]);
 
 struct DataGridTimeSeries *initDataGridTimeSeries(char *data_file);
 int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZE]);
+
+struct TaskTimeSeries *initTaskTimeSeries(char *data_file);
+int addTaskData(struct TaskTimeSeries *tts, int tasksStatus[MAX_TASKS]);
 
 struct RobotTimeSeries *initRobotTimeSeries(char *data_file);
 int addRtsData(struct RobotTimeSeries *rts, float bat, Vec2d location, Vec2d moment);

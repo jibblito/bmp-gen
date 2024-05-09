@@ -49,7 +49,7 @@ int main (int argc, char** argv) {
   // Initialize arena
 
   int n_robots = 6;
-  ARENA *arena = initArena(n_robots,ARENA_WIDTH_IN_PIXELS);
+  ARENA *arena = initArena(n_robots,ARENA_WIDTH_IN_PIXELS,0);
 
   // Prepare DataGrid time series
 

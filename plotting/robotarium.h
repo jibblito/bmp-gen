@@ -19,7 +19,7 @@ typedef struct Arena {
   Vec2d chargers[MAX_ROBOTS];
 } ARENA;
 
-ARENA *initArena(int n_robots, int ROBOTARIUM_WIDTH);
+ARENA *initArena(int n_robots, int ROBOTARIUM_WIDTH, int mode);
 void destroyArena(ARENA *a);
 
 // Helper functions

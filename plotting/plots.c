@@ -85,6 +85,33 @@ int addGridData(struct DataGridTimeSeries *dgts, unsigned char dataGrid[GRID_SIZ
 
 }
 
+struct TaskTimeSeries *initTaskTimeSeries(char *data_file) {
+  // RobotTimeSeries struct | battery | x | y
+  size_t tts_size = sizeof(struct TaskTimeSeries);
+  struct TaskTimeSeries *tts = malloc(tts_size); 
+  int length = 0;
+
+  if (data_file != NULL) {
+    // Worry about this later, reading DATA from FILE -- copy from initRobotTimeSeries
+  }
+  tts->length = length;
+  return tts;
+
+}
+
+int addTaskData(struct TaskTimeSeries *tts, int tasksStatus[MAX_TASKS]) {
+  if (tts->length == MAX_TS_SIZE) {
+    printf("Time series exceeds MAX_TS_SIZE\n");
+    return 12;
+  }
+  int i;
+  for (i = 0; i < MAX_TASKS; i++) {
+    tts->states[tts->length][i] = tasksStatus[i];
+  }
+  tts->length = tts->length + 1;
+  return tts->length;
+}
+
 struct RobotTimeSeries *initRobotTimeSeries (char* data_file) {
   // RobotTimeSeries struct | battery | x | y
   size_t rts_size = sizeof(struct RobotTimeSeries);
