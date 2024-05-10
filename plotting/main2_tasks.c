@@ -377,10 +377,10 @@ int main (int argc, char** argv) {
   printf("Gathering Data from simulation for %d iterations...\n",n_iterations);
 
   char filename[64] = {0};
-  sprintf(filename,"cvs/SimStats_mode%d_tasks%d.csv",mode,n_tasks);
+  sprintf(filename,"csv/Stats_mode%d_tasks%d.csv",mode,n_tasks);
   FILE* csvFile = fopen(filename, "wb");
   char buf[128] = { 0 };
-  sprintf(buf,"DistanceFromTasks,TasksPer,EnergyUsage\n");
+  sprintf(buf,"i,DistanceFromTasks,DistanceTraveled\n");
   fwrite(buf, 1, strlen(buf), csvFile);
   memset(buf,'\0',128);
 
@@ -410,7 +410,7 @@ int main (int argc, char** argv) {
       cumulativeDistance += distanceCovered;
     }
 
-    sprintf(buf,"%3.3f,%3.3f,\n",locationalCost,cumulativeDistance);
+    sprintf(buf,"%d,%3.3f,%3.3f\n",i,locationalCost,cumulativeDistance);
     fwrite(buf, 1, strlen(buf), csvFile);
   }
 
