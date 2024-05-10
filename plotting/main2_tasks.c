@@ -17,7 +17,7 @@ int main (int argc, char** argv) {
    * MODES:
    *  0: Default algorithm, 1: Gain function applied, 2: Threshold applied
    */
-  int mode = 0;
+  int mode = 1;
 
   int i,j,k,l;
 
@@ -72,6 +72,28 @@ int main (int argc, char** argv) {
   };
   float pi_desired[4] = {
     0.25,0.25,0.25,0.25
+  };
+  */
+
+
+  /*
+  int n_tasks = 5;
+  Vec2d tasks_1[5] = {
+     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/6*1},
+     {ARENA_WIDTH_IN_PIXELS/6*2,ARENA_WIDTH_IN_PIXELS/6*2},
+     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/6*3},
+     {ARENA_WIDTH_IN_PIXELS/6*4,ARENA_WIDTH_IN_PIXELS/6*4},
+     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/6*5}
+  };
+  Vec2d tasks_2[5] = {
+     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/6*3},
+     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/6*5},
+     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/6*1},
+     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/6*5},
+     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/6*3}
+  };
+  float pi_desired[5] = {
+    0.2,0.2,0.2,0.2,0.2
   };
   */
 
