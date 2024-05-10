@@ -8,6 +8,8 @@ To compile (robotics demonstration):
 I have commented out the code that generates such large amount of files, to protect the end-user.
 
 ==== ROBOTARIUM ====
-Relevant code for running ROBOTARIUM is in plotting/main.c
+Relevant code for running ROBOTARIUM is in plotting/main.c and plotting/main2_tasks.c
+
+For task control code, look at main2_tasks.c
 
 There you will see the control loop, which generates runtime data for all the robots.

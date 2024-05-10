@@ -13,6 +13,12 @@
 
 int main (int argc, char** argv) {
 
+  /*
+   * MODES:
+   *  0: Default algorithm, 1: Gain function applied, 2: Threshold applied
+   */
+  int mode = 0;
+
   int i,j,k,l;
 
   int ARENA_WIDTH_IN_PIXELS = 150;
@@ -20,7 +26,6 @@ int main (int argc, char** argv) {
 
   // Initialize Task Locations
   
-  /*
   int n_tasks = 3;
   Vec2d tasks_1[3] = {
      {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3},
@@ -28,14 +33,13 @@ int main (int argc, char** argv) {
      {ARENA_WIDTH_IN_PIXELS/4*3,ARENA_WIDTH_IN_PIXELS/4*1}
   };
   Vec2d tasks_2[3] = {
-     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*1},
-     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*2},
-     {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3}
+     {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/2},
+     {ARENA_WIDTH_IN_PIXELS/6*3,ARENA_WIDTH_IN_PIXELS/2},
+     {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/2}
   };
   float pi_desired[3] = {
     0.33, 0.33, 0.33
   };
-  */
 
   /*
   int n_tasks = 2;
@@ -52,6 +56,7 @@ int main (int argc, char** argv) {
   };
   */
 
+  /*
   int n_tasks = 4;
   Vec2d tasks_1[4] = {
      {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*1},
@@ -68,6 +73,7 @@ int main (int argc, char** argv) {
   float pi_desired[4] = {
     0.25,0.25,0.25,0.25
   };
+  */
 
   int n_robots = n_tasks;
 
@@ -122,13 +128,16 @@ int main (int argc, char** argv) {
     int alpha[MAX_ROBOTS] = {0};
     for (j = 0; j < MAX_ROBOTS; j++) alpha[j] = -1;
 
+    /**
+     * Block 1: Adjust slack based on nearness to task
+     */
     // For each robot, adjust slack based on nearest tasks
     for (j = 0; j < arena->n_robots; j++) {
       float distance_robot_to_task;
       float taskDistances[MAX_TASKS] = {0};
       float max_dist = 0, min_dist = 99999;
 
-      // Will add a metric to weights: the closer a robot is, the higher its weight (alpha)
+      // If a robot is close to a task, its slack will go down - it is becoming assigned
       int closest_task_index = -1;
       for (k = 0; k < n_tasks; k++) {
         distance_robot_to_task = vectorDistance(&cur_loc[j],&tasks[k]);
@@ -147,23 +156,44 @@ int main (int argc, char** argv) {
       float taskDistanceRelativeWeights[MAX_TASKS] = {0};
       for (k = 0; k < n_tasks; k++) {
         float relativeWeight = (taskDistances[k] - min_dist) / range; // (0-1) := (shortest-longest)
-        relativeWeight -= 0.1; // (-0.5,0.5) := (shortest,longest)
+        relativeWeight -= 0.5; // (-0.5,0.5) := (shortest,longest)
         taskDistanceRelativeWeights[k] = relativeWeight;
       }
 
       for (k = 0; k < n_tasks; k++) {
-        slack[j][k] += slack_factor * taskDistanceRelativeWeights[k]; 
+        if (mode == 0) { // Default
+          slack[j][k] += slack_factor * taskDistanceRelativeWeights[k]; 
+        } else if (mode == 1) { // Gain on low extreme
+          float g = 1;
+          if (taskDistanceRelativeWeights[k] < -0.49) {
+            taskDistanceRelativeWeights[k] -= g;
+          } else {
+            taskDistanceRelativeWeights[k] += g;
+          }
+          slack[j][k] += slack_factor * taskDistanceRelativeWeights[k];
+        } else if (mode == 2) { // Threshold (0 or 1)
+          if (taskDistanceRelativeWeights[k] < -0.49) {
+            slack[j][k] = min_slack;
+          } else {
+            slack[j][k] = max_slack;
+          }
+        } else {
+          printf("Mode %d not accepted. Try again, fella.\n",mode);
+          return 1;
+        }
         if (slack[j][k] > max_slack) slack[j][k] = max_slack;
         if (slack[j][k] < min_slack) slack[j][k] = min_slack;
       }
     }
 
-    // Correct for Pi (Make sure all tasks are assigned)
+    /**
+     * Block 2: If a job is assigned to multiple robots, keep only the closest robot
+     */
+    // Correct for Pi
     float pi_actual[MAX_TASKS] = { 0 };
     for (j = 0; j < arena->n_robots; j++) {
       pi_actual[alpha[j]] += 1.0f/(float)arena->n_robots;
     }
-    
     for (k = 0; k < n_tasks; k++) {
       if (pi_actual[k] > (pi_desired[k] + 0.05)) {
         while (pi_actual[k] > (pi_desired[k] + 0.05)) {
@@ -186,7 +216,10 @@ int main (int argc, char** argv) {
       }
     }
 
-    // For each robot, adjust slack based on empty jobs
+    /**
+     * Block 3: Assign unassigned tasks to unassigned robots
+     */
+    // For each robot, adjust slack based on unassigned tasks
     for (k = 0; k < n_tasks; k++) {
       for(j = 0; j < arena->n_robots; j++) {
         if (alpha[j] == -1) {
@@ -200,6 +233,12 @@ int main (int argc, char** argv) {
     }
 
 
+    /**
+     * Block 4: Search {circleResolution} locations to find an optimal movement vector
+     *   where {circleResolution} defines a number of points around each robot,
+     *   to which that robot can travel. This is a way of simplifying
+     *   the minimization problem to only a small neighborbood of points
+     */
     // probe potential moments to satisfy choosing u_i for moment
     float circleRadius = 3;
     int circleResolution = 12;
@@ -241,6 +280,9 @@ int main (int argc, char** argv) {
         }
       }
 
+      // Now that the target has been found, assign the
+      // control vector to the robot
+
       struct RobotTimeSeries *robot = arena->states[j];
       
       Vec2d control_vec = { 0 };
@@ -261,8 +303,15 @@ int main (int argc, char** argv) {
       addRtsData(robot,100,cur_loc[j],cur_moment[j]);
     }
 
+    // Update status of tasks
     addTaskData(DATA_tasks,cur_tasks_status);
   }
+
+  /**
+   * Block 5: Demo Generation. Important algorithms end here.
+   *  after this point, the program handles the generation of
+   *  images for the demo.
+   */
 
   // Initialize COLORS
 
@@ -319,63 +368,52 @@ int main (int argc, char** argv) {
     generateBitmapImage(cvs);
   }
 
+  /**
+   * Block 6:  Data gathering. Here the data for the experiments
+   * is gathered and put into CSV files.
+   */
   // Gather Data!
 
   printf("Gathering Data from simulation for %d iterations...\n",n_iterations);
 
-  FILE* csvFile = fopen("Simulation_Stats.csv", "wb");
+  char filename[64] = {0};
+  sprintf(filename,"cvs/SimStats_mode%d_tasks%d.csv",mode,n_tasks);
+  FILE* csvFile = fopen(filename, "wb");
   char buf[128] = { 0 };
-  sprintf(buf,"LocationalCost,MapUncovered,MeanEnergy,CumulativeDistance\n");
+  sprintf(buf,"DistanceFromTasks,TasksPer,EnergyUsage\n");
   fwrite(buf, 1, strlen(buf), csvFile);
   memset(buf,'\0',128);
 
-  /*
   float cumulativeDistance = 0;
 
+  tasks = tasks_1;
   for (i = 0; i < arena->states[0]->length; i++) {
+    if(i == n_iterations/2) {
+      tasks = tasks_2;
+    }
 
-    // Locational Cost: Distance from each distribution to nearest robot
+    // Locational Cost: Distance from each task to closest robot, summed
     float locationalCost = 0;
-    for (j = 0; j < n_distributions; j++) {
-      float shortest_distance = vectorDistance(&distributions[j],&arena->states[0]->loc[i]);
-      for (k = 1; k < arena->n_robots; k++) {
-        float robot_distance = vectorDistance(&distributions[j],&arena->states[k]->loc[i]);
-        if (robot_distance < shortest_distance) shortest_distance = robot_distance;
+    for (k = 0; k < n_tasks; k++) {
+      float closestRobotDistance = 99999;
+      for (j = 0; j < arena->n_robots; j++) {
+        float potentialDist = vectorDistance(&arena->states[j]->loc[i],&tasks[k]);
+        if (potentialDist < closestRobotDistance) closestRobotDistance = potentialDist;
       }
-      locationalCost += shortest_distance;
+      locationalCost += closestRobotDistance;
     }
 
-    // MapUncovered: Percentage of map uncovered
-    float explorationCost = 0;
-    for (j = 0; j < GRID_SIZE; j++) {
-      unsigned char coverage_data = DATA_coverage->grids[i].data[j];
-      float exploration_degree = 1 - (float)coverage_data/255;
-      explorationCost += exploration_degree;
-    }
-    explorationCost = explorationCost / (float)GRID_SIZE;
-    explorationCost = explorationCost * 100.0f;
-
-    // Energy Mean: Mean energy level of all robots
-
-    float energyMean = 0;
-    float energySum = 0;
-    for (j = 0; j < arena->n_robots; j++) {
-      float battery = arena->states[j]->battery[i];
-      energySum += battery;
-    }
-    energyMean = energySum / (float)arena->n_robots;
-
-    // Cumulative Distance: Distance traveled by all robots
+    // Energy usage: Distance traveled by all robots
     float distanceCost = 0;
     for (j = 0; j < arena->n_robots; j++) {
       float distanceCovered = vectorScale(&arena->states[j]->moment[i]);
       cumulativeDistance += distanceCovered;
     }
 
-    sprintf(buf,"%3.3f,%3.3f,%3.3f,%3.3f\n",locationalCost,explorationCost,energyMean,cumulativeDistance);
+    sprintf(buf,"%3.3f,%3.3f,\n",locationalCost,cumulativeDistance);
     fwrite(buf, 1, strlen(buf), csvFile);
   }
-  */
+
   fclose(csvFile);
   printf("simulation data written to Simulation_Stats.csv\n");
 
