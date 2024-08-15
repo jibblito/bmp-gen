@@ -8,6 +8,7 @@
 #include "canvas.h"
 
 
+
 /**
  *  HEIGHT (4) | WIDTH (4) | ROWLENGTH (4) | NAME (32) | IMAGE (variable)
  */
@@ -44,6 +45,30 @@ void generateBitmapImage(struct Canvas *cvs) {
   }
   fclose(imageFile);
 }
+
+/**
+ * Generate an XImage struct for da image
+ */
+int flashCanvasToXImage(struct Canvas *cvs, XImage *xim) {
+  if (cvs->height != xim->height) {
+    fprintf(stderr,"Canvas height does not match XImage height\n");
+    return 1;
+  }
+  if (cvs->width != xim->width) {
+    fprintf(stderr,"Canvas width does not match XImage width\n");
+    return 1;
+  }
+  int i,j;
+  unsigned long pixel;
+  for (i = 0; i < cvs->height; i++) {
+    for (j = 0; j < cvs->width; j++) {
+      memcpy(&pixel,cvs->image+i*cvs->rowlength+j*BYTES_PER_PIXEL,3);
+      xim->f.put_pixel(xim,j,i,pixel);
+    }
+  }
+  return 0;
+}
+
 
 /**
  * Bitmap file header.. Have not tooled with the settings of bitmaps,

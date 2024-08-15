@@ -19,12 +19,29 @@
 #include "canvas.h"
 #include "colorvec.h"
 #include "transformations.c"
+#include <X11/Xutil.h>
+
+#include <unistd.h> // usleep()
+#include <sys/time.h> // gettimeofday()
+#include <string.h> // strlen()
+
+/*
+ * Get time of day
+ */
+double get_time(void)
+{
+  struct timeval timev;
+
+  gettimeofday(&timev, NULL);
+
+  return (double)timev.tv_sec + (((double)timev.tv_usec) / 1000000);
+}
 
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 203;
-    int width = height;
+    int height = 50;
+    int width = 80;
 
     char imageFileName[32];
     if (argc == 1)
@@ -38,7 +55,7 @@ int main (int argc, char **argv)
     }
 
 
-    struct Canvas *beall = initCanvas(height, width, imageFileName);
+    struct Canvas *beall = initCanvas(width, height, imageFileName);
 
     struct ColorVec blue,red,green,slack_blue,fuschia;
 
@@ -52,118 +69,6 @@ int main (int argc, char **argv)
      * experiment zone
      */
 
-    int i;
-    for (i = 0; i < beall->width; i++) {
-      plot(beall,i,10,&blue);
-      plot(beall,90,i,&green);
-      plot(beall,i,i/2,&slack_blue);
-      plot(beall,i,i,&red);
-    }
-    plot(beall,30,30,&blue);
-    etchCircle(beall, 50, 50, 10, &fuschia);
-
-    drawLine(beall, 29,5,29,189,&fuschia);
-
-
-    int r, g, b;
-    float offset = 1;
-
-    /**
-    for (i = -50; i < 50; i++) {
-      int grade = 255/2 + (int)(sin(offset+(float)i/5)*(255/2));
-      struct ColorVec* giggle= initColor(grade,grade,grade);
-      drawLine(beall,20,100+i,180,100-i,giggle);
-    }
-    */
-
-    // Joining of four Diamonds
-    for (i = 0; i <= width; i++) {
-      float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
-      r = 155 * shade_fac;
-      g = 153 * shade_fac;
-      b = 251 * shade_fac;
-      struct ColorVec giggle;
-      initColor(&giggle,r,g,b);
-      drawLine(beall,i,0,width-i,width,&giggle);
-    }
-
-    drawRect(beall,30,30,20,20,&green);
-
-    /*
-    for (i = 0; i <= width; i++) {
-      float shade_fac = (float)((width/2)-abs(width/2 - i))/(float)(width/2);
-      r = (int)(((float)i/(float)width) * 255);
-      g = (int)(((float)i/(float)width) * 243);
-      b = (int)(((float)i/(float)width) * 231);
-      r = 155 * shade_fac;
-      g = 193 * shade_fac;
-      b = 1 * shade_fac;
-
-      struct ColorVec* giggle= initColor(r,g,b);
-      drawLine(beall,0,i,width,width-i,slack_blue);
-    }
-    */
-
-    /*
-    // Idea for diamonded paddurn
-    for (i = 0; i < width; i++) {
-      for (j = 0; j < width; j++) {
-        r = 155 * ((float)(j * i)/(float)(width*width));
-        g = 33;
-        b = sin(j);
-
-        int centroid_x = (float)(i/10) * (width/10);
-        int centroid_y = (float)(j/10) * (width/10);
-
-        drawLine(beall,i,j,
-      }
-    }
-    */
-
-    int x_runner = 0, y_runner = 0;
-    int center = width/2;
-    r=0;
-    g=0;
-    b=0;
-
-    /**
-    // Random Runner
-    while (x_runner < width) {
-      r = rand() % 155;
-      g = rand() % 155;
-      b = rand() % 155;
-      struct ColorVec* santiago = initColor(r,g,b);
-      drawLine(beall,x_runner,y_runner,center,center,santiago);
-      x_runner += 5;
-    }
-    */
-
-
-    /**
-    //Sine Wave, dude!
-    for (i = 0; i < beall->width/2; i++) {
-      r = 255/2 + (int)(sin(offset+(float)i/5)*(255/2));
-      g = 255/2 + (int)(sin(offset+(float)i/6)*(255/2));
-      b = 255/2 + (int)(sin(offset+(float)i/7)*(255/2));
-      struct ColorVec* giggle= initColor(r,g,b);
-      // etchCircle(beall, beall->width/2,beall->width/2,i,giggle);
-    }
-    for (i = 0; i < beall->width; i++) {
-      plot(beall,i,beall->width/2+sin((float)i/100)*50,slack_blue);
-    }
-    */
-
-
-
-    //int rowlength = height;
-    //drawGradiSquare(beall->image,height*3,0,0,height);
-    //drawSquare(image,height*3,1,100,height-200);
-    // int i;
-    // drawGradiSquare(image,rowlength,0,0,width);
-    // drawLine(image,rowlength,1,1,300,13);
-    // drawLine(image,rowlength,300,13,0,50);
-    // drawLine(image,rowlength,0,50,200,200);
-    // drawLineConColor(image,rowlength,200,200,300,100,blue);
     
     struct ColorVecGradient grnRedBlu;
     grnRedBlu.n_colors = 0;
@@ -171,12 +76,111 @@ int main (int argc, char **argv)
     addColorToColorVecGradient(&grnRedBlu,&red);
     addColorToColorVecGradient(&grnRedBlu,&blue);
 
+    int i,j;
     for (i = 0; i < beall->width; i++) {
       struct ColorVec clr = getColorFromGradient(&grnRedBlu,(float)i/(float)beall->width);
-      drawLine(beall,i,10,i,60,&clr);
+      drawLine(beall,i,0,i,60,&clr);
     }
+
     
+    Display *dis;
+    Window win;
+    XEvent event;
+    const char *msg = "Crenshack!";
+    int scr;
+
+    dis = XOpenDisplay(NULL);
+    if (dis == NULL) {
+      fprintf(stderr,"cannot open display!\n");
+      exit(1);
+    }
+
+    scr = DefaultScreen(dis);
+    int black = BlackPixel(dis,scr);
+    int white = WhitePixel(dis,scr);
+    Visual *vis = DefaultVisual(dis,scr);
+
+    win = XCreateSimpleWindow(dis, RootWindow(dis,scr), 0,0, beall->width, beall->height,1,
+        black, white);
+
+    XSetStandardProperties(dis,win,"Boy Game","BGIcon",None,NULL,0,NULL);
+    XSelectInput(dis, win, KeyPressMask | KeyReleaseMask | 
+                 ButtonPressMask | ButtonReleaseMask);
+
+    GC gc;
+    gc = XCreateGC(dis,win,0,0);
+    XSetBackground(dis,gc,white);
+    XSetForeground(dis,gc,black);
+
+    // XImage specs to match Canvas
+      int depth = 24; // works fine with depth = 24
+      int bitmap_pad = 32; // 32 for 24 and 32 bpp, 16, for 15&16
+      int bytes_per_line = width*4; // number of bytes in the client image between the start of one scanline and the start of the next
+      unsigned char *image32=(unsigned char *)malloc(width*height*4);
+      XImage *xim= XCreateImage(dis, vis, depth, ZPixmap, 0, image32, width, height, bitmap_pad, bytes_per_line);
+      if (xim == NULL) {
+        printf("Nulled out on XCreateImage, yo! (xim)\n");
+      }
+    // end XImage specs 
+
+    XMapRaised(dis,win);
+
+    KeySym keyGet;
+
+    double startFrameCalc, endFrameCalc, frameCalcTotal, ideal_frames_per_second, frame_length_in_usec;
+    
+    ideal_frames_per_second = 30;
+    frame_length_in_usec = 1000000 / ideal_frames_per_second;
+
+    char *quitmsg = "Press esc or q to quit";
+
+    int running = 1;
+    while (running) {
+      startFrameCalc = get_time();
+      // Register inputs
+      int capture_this = 0;
+      while (XPending (dis)) {
+        XNextEvent (dis, &event);
+        switch (event.type) {
+          case KeyPress:
+            printf("Key gotten!\n");
+            XLookupString(&event.xkey,NULL,0,&keyGet,0);
+            switch(keyGet) {
+              case XK_Escape:
+                running = 0;
+                break;
+              case XK_q:
+                running = 0;
+                break;
+            }
+        }
+      }
+      
+
+      flashCanvasToXImage(beall,xim);
+      int ret = XPutImage(dis,win,gc,xim,0,0,0,0,xim->width,xim->height);
+
+      XDrawString(dis, win, gc, 10, 20, quitmsg, strlen(quitmsg));
+      XDrawRectangle(dis,win, gc, 1, 1, 30, 30);
+
+      endFrameCalc = get_time();
+      frameCalcTotal = (endFrameCalc - startFrameCalc)*1000000.0f;
+
+      double sleepTime = frame_length_in_usec - frameCalcTotal;
+      if (sleepTime < 0)
+        printf("Lag detected... frame not rendered in time!");
+      else 
+        usleep(sleepTime);
+
+      
+    }
+
+    XDestroyImage(xim);
+    XFreeGC(dis,gc);
+    XCloseDisplay(dis);
+
     generateBitmapImage(beall);
-    printf("Image generated!!\n");
+    // printf("Image generated!!\n");
+
     free(beall);
 }

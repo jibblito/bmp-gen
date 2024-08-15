@@ -1,6 +1,8 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
+#include <X11/Xlib.h>
+
 /**
  * Defined as canvas.h when in reality it also deals with
  * bitmap writing -- I realize this violates one-file, one-function
@@ -20,6 +22,7 @@ struct Canvas {
 };
 
 void generateBitmapImage(struct Canvas *cvs);
+int flashCanvasToXImage(struct Canvas *cvs, XImage *xim);
 unsigned char* createBitmapFileHeader(int height, int stride);
 unsigned char* createBitmapInfoHeader(int height, int width);
 struct Canvas *initCanvas(int width, int height, char *name);
