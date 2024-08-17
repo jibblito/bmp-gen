@@ -39,7 +39,7 @@ void generateBitmapImage(struct Canvas *cvs) {
   fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
 
   int i;
-  for (i = 0; i < cvs->height; i++) {
+  for (i = cvs->height-1; i >= 0; i--) {
     fwrite(cvs->image + (i * widthInBytes), BYTES_PER_PIXEL, cvs->width, imageFile);
     fwrite(padding, 1, paddingSize, imageFile);
   }

@@ -101,6 +101,7 @@ int main (int argc, char **argv)
     addColorToColorVecGradient(&beautiful,&green);
     addColorToColorVecGradient(&beautiful,&red);
     addColorToColorVecGradient(&beautiful,&blue);
+    beautiful.loop = 1;
 
     /**
      * experiment zone

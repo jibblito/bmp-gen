@@ -51,10 +51,9 @@ struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree)
     n_colors++;
   roughIndex = degree * (float)(n_colors-1);
   indexFloor = floorf(roughIndex);
-  if (cvg->loop == 1) {
-    if (indexFloor == cvg->n_colors-1)
+  if (cvg->loop == 1 && indexFloor == cvg->n_colors-1)
       indexCeil = 0;
-  } else
+  else
     indexCeil = indexFloor + 1;
 
   float normalizedDegree = roughIndex - (float)indexFloor;
