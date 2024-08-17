@@ -141,6 +141,23 @@ int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec*
   }
 }
 
+int drawLineAngle(struct Canvas *cvs, int x,int y, float radians, int length, struct ColorVec* clr) {
+  int x_offset, y_offset;
+  x_offset = sinf(radians) * length;
+  y_offset = cosf(radians) * length;
+  return drawLine(cvs,x,y,x+x_offset,y+y_offset,clr);
+}
+
+int drawLineAngleSec(struct Canvas *cvs, int x,int y, float radians, int slength, int elength, struct ColorVec* clr) {
+  if (slength > elength) return 0;
+  int sx_offset, sy_offset, ex_offset, ey_offset;
+  sx_offset = sinf(radians) * slength;
+  sy_offset = cosf(radians) * slength;
+  ex_offset = sinf(radians) * elength;
+  ey_offset = cosf(radians) * elength;
+  return drawLine(cvs,x+sx_offset,y+sy_offset,x+ex_offset,y+ey_offset,clr);
+}
+
 /**
  * Etch (outline) a circle, dude!
  */
