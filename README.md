@@ -22,6 +22,3 @@ all the proper libraries installed. Notably, you must have X11 and
 the Xlib libraries installed, which come with most versions of Linux.
 
 That's all. Feel free to email me (see profile) if you have any questions.
-
-
- - Hey, Bobby!
