@@ -25,6 +25,9 @@
 #include <sys/time.h> // gettimeofday()
 #include <string.h> // strlen()
 
+#define MAX_ENTITIES 10
+enum EntityTypes { PLAYER, BALL, SQUARE };
+
 /*
  * Get time of day
  */
@@ -38,14 +41,59 @@ double get_time(void)
 }
 
 /**
+ * Entity object
+ */
+typedef struct Entity Entity;
+struct Entity {
+  int x,y;
+  int m_x, m_y;       // momentum
+  int width,height;
+  int type;
+  int (*drawEntity) (Entity *, struct Canvas *, struct ColorVec *);
+}; 
+
+Entity entities[MAX_ENTITIES] = { 0 };
+int n_entities = 0;
+
+int drawPlayer(Entity *self, struct Canvas *cvs, struct ColorVec *clr) {
+  drawRect(cvs,self->x,self->y,self->width,self->height,clr);
+}
+
+int drawBall(Entity *self, struct Canvas *cvs, struct ColorVec *clr) {
+  etchCircle(cvs,self->x,self->y,self->width/2,clr);
+}
+
+/**
  * Entity control in the world. Kind of has nothing to do with bmp-gen, so we
  * gonna move it later. This all has nothing to do with bmp-gen really.
  *
  * It's more of a game, lol. But hey, soon we will move bmp-gen files to
  * /usr/lib/ so that we can be awesome by saying we have created software.
  */
-void addEntityToWorld(int x, int y) {
-
+int addEntityToWorld(int x, int y, int type) {
+  if (n_entities < MAX_ENTITIES) {
+    Entity newEntity = { .x = x, .y = y, .m_x = 0, .m_y = 0, .type = type};
+    switch(type) {
+      case PLAYER:
+        newEntity.width = 10;
+        newEntity.height = 10;
+        newEntity.drawEntity = drawPlayer;
+        break;
+      case BALL:
+        newEntity.width = 20;
+        newEntity.height = 20;
+        newEntity.drawEntity = drawBall;
+        break;
+      default:
+        return 1;
+    }
+    entities[n_entities] = newEntity;
+    n_entities++;
+    fprintf(stdout,"Entity (type: %d) successfully added\n", type);
+    return 0;
+  }
+  fprintf(stderr,"Maximum number of entities reached\n");
+  return 1;
 }
 
 int main (int argc, char **argv)
@@ -286,7 +334,7 @@ int main (int argc, char **argv)
           case ButtonPress:
             XButtonEvent xbutton = event.xbutton;
             printf("x:%d,y:%d\n",xbutton.x,xbutton.y);
-            addEntityToWorld(xbutton.x,xbutton.y);
+            addEntityToWorld(xbutton.x,xbutton.y,BALL);
             break;
         }
         break;
@@ -342,6 +390,37 @@ int main (int argc, char **argv)
       }
 
       /**
+       * Block: Change natural state of game
+       */
+
+      for (i = 0; i < n_entities; i++) {
+        Entity *e = &entities[i];
+        // Move entities
+        e->x += e->m_x;
+        e->y -= e->m_y;
+
+        // Adjust thinges
+        e->m_y -= gravity_constant;
+        if (e->y < 0) {
+          e->y = 0;
+          e->m_y *= -1;
+        }
+        if (e->y > height-1) {
+          e->y = height-1;
+          e->m_y *= -1;
+          e->m_x < 0 ? e->m_x-- : e->m_x++;
+        }
+        if (e->x <= 0) {
+          e->x = 0;
+          e->m_x *= -1;
+        }
+        if (e->x > width-1) {
+          e->x = width-1;
+          e->m_x *= -1;
+        }
+      }
+
+      /**
        * Block: Manipulate canvas
        */
 
@@ -374,6 +453,10 @@ int main (int argc, char **argv)
       drawRect(beall,30,30,40,40,&yeller);
       drawRect(beall,30,40,40,50,&indigo);
       drawRect(beall,30,50,40,60,&bluebird);
+
+      for (i = 0; i < n_entities; i++) {
+        entities[i].drawEntity(&entities[i],beall,&yeller);
+      }
       
 
       /**
