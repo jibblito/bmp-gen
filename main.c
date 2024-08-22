@@ -37,6 +37,17 @@ double get_time(void)
   return (double)timev.tv_sec + (((double)timev.tv_usec) / 1000000);
 }
 
+/**
+ * Entity control in the world. Kind of has nothing to do with bmp-gen, so we
+ * gonna move it later. This all has nothing to do with bmp-gen really.
+ *
+ * It's more of a game, lol. But hey, soon we will move bmp-gen files to
+ * /usr/lib/ so that we can be awesome by saying we have created software.
+ */
+void addEntityToWorld(int x, int y) {
+
+}
+
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
@@ -67,22 +78,21 @@ int main (int argc, char **argv)
 
 
     struct Canvas *beall = initCanvas(width, height, imageFileName);
+    struct Canvas *background= initCanvas(width, height, "background.bmp");
+    struct Canvas *zeal = initCanvas(width, height, "zeal.bmp");
+    int explorerWidth = width / 3;
+    struct Canvas *workspaceWindow = initCanvas(explorerWidth, height, "explorer.bmp");
 
-    struct ColorVec blue,red,green,slack_blue,fuschia;
-
-    initColor(&blue,0,0,255);
-    initColor(&red,255,0,0);
-    initColor(&green,0,255,0);
-    initColor(&slack_blue,50,30,177);
-    initColor(&fuschia,230,3,102);
+    INIT_COLOR(blue,0x0000ff);
+    INIT_COLOR(red,0xff0000);
+    INIT_COLOR(green,0x00ff00);
+    INIT_COLOR(slack_blue,0x321eb1);
+    INIT_COLOR(fuschia,0xe60368);
     INIT_COLOR(yeller,0xf9db17);
     INIT_COLOR(indigo,0x6e00fd);
     INIT_COLOR(bluebird,0x1cc2b5);
-
-    struct ColorVec whitxe;
-    initColor(&whitxe,255,255,255);
-    struct ColorVec blaq;
-    initColor(&blaq,0,0,0);
+    INIT_COLOR(whitxe,0xffffff);
+    INIT_COLOR(blaq,0x000000);
 
     struct ColorVecGradient gradient1;
     gradient1.n_colors = 0;
@@ -106,13 +116,13 @@ int main (int argc, char **argv)
     /**
      * experiment zone
      */
-
     
     struct ColorVecGradient grnRedBlu;
     grnRedBlu.n_colors = 0;
     addColorToColorVecGradient(&grnRedBlu,&green);
     addColorToColorVecGradient(&grnRedBlu,&red);
     addColorToColorVecGradient(&grnRedBlu,&blue);
+    grnRedBlu.loop = 1;
 
     INIT_GRADIENT(blackwhite);
     addColorToColorVecGradient(&blackwhite,&blaq);
@@ -120,8 +130,8 @@ int main (int argc, char **argv)
 
     int i,j;
     for (i = 0; i < beall->width; i++) {
-      struct ColorVec clr = getColorFromGradient(&beautiful,(float)i/(float)beall->width);
-      drawLine(beall,i,0,i,beall->height,&clr);
+      struct ColorVec clr = getColorFromGradient(&beautiful,(float)i/(float)background->width);
+      drawLine(background,i,0,i,background->height,&clr);
     }
 
     /**
@@ -161,9 +171,8 @@ int main (int argc, char **argv)
     // XImage specs to match Canvas
       int depth = 24; // works fine with depth = 24
       int bitmap_pad = 32; // 32 for 24 and 32 bpp, 16, for 15&16
-      int bytes_per_line = width*4; // number of bytes in the client image between the start of one scanline and the start of the next
       unsigned char *image32=(unsigned char *)malloc(width*height*4);
-      XImage *xim= XCreateImage(dis, vis, depth, ZPixmap, 0, image32, width, height, bitmap_pad, bytes_per_line);
+      XImage *xim= XCreateImage(dis, vis, depth, ZPixmap, 0, image32, width, height, bitmap_pad, 0);
       if (xim == NULL) {
         printf("Nulled out on XCreateImage, yo! (xim)\n");
       }
@@ -181,6 +190,7 @@ int main (int argc, char **argv)
     int friction_constant = 1;
     int max_speed=10;
     int accel_x = 2;
+    int boy_x_prev = boy_x, boy_y_prev = boy_y;
 
 
     // end that!
@@ -200,6 +210,17 @@ int main (int argc, char **argv)
     int period1 = 2000;
     int period2 = 60;
     int lag_detected = 0;
+    int right_pressed;
+    int left_pressed;
+    int acceling_right = 0;
+    int acceling_left = 0;
+    int watermark = 0;
+
+    char workspace_display = 0;
+    char toggle_guy = 0;
+
+    int pressedX, pressedY;
+    int releasedX, releasedY;
 
     /**
      * Run Loop
@@ -207,15 +228,22 @@ int main (int argc, char **argv)
     printf("Press q or esc on the window to quit! Or ctrl-c here!!!\n");
     while (running) {
       startFrameCalc = get_time();
+      right_pressed = 0;
+      left_pressed = 0;
+
 
       /**
        * Block: Register X Inputs
        */
-      while(XPending(dis)) {
+      int p_watermark;
+      while(p_watermark = XPending(dis)) {
+        if (p_watermark > watermark) {
+          watermark = p_watermark;
+          printf("world record: max events per frame: %d\n",watermark);
+        }
         XNextEvent(dis,&event);
         switch (event.type) {
           case KeyPress:
-            printf("Key gotten!\n");
             XLookupString(&event.xkey,NULL,0,&keyGet,0);
             switch(keyGet) {
               case XK_Escape:
@@ -229,37 +257,61 @@ int main (int argc, char **argv)
                 boy_momentum_y = 10;
                 break;
               case XK_a:
-                boy_momentum_x -= accel_x;
+                left_pressed = 1;
+                acceling_left = 1;
                 break;
               case XK_d:
-                boy_momentum_x += accel_x;
+                right_pressed = 1;
+                acceling_right = 1;
+                break;
+              case XK_p:
+                workspace_display = (workspace_display==1) ? 0 : 1;
+                break;
+              case XK_z:
+                toggle_guy = (toggle_guy==1) ? 0 : 1;
                 break;
             }
             break;
+          case KeyRelease:
+            XLookupString(&event.xkey,NULL,0,&keyGet,0);
+            switch(keyGet) {
+              case XK_a:
+              acceling_left = 0;
+              break;
+              case XK_d:
+              acceling_right = 0;
+              break;
+            }
+            break;
+          case ButtonPress:
+            XButtonEvent xbutton = event.xbutton;
+            printf("x:%d,y:%d\n",xbutton.x,xbutton.y);
+            addEntityToWorld(xbutton.x,xbutton.y);
+            break;
+        }
+        break;
+      }
+      XFlush(dis);
+
+      /**
+       * Block: Change state of game based on input
+       */
+
+      if (boy_on_ground) {
+        if (acceling_right || right_pressed) {
+          boy_momentum_x += accel_x;
+        }
+
+        if (acceling_left || left_pressed) {
+          boy_momentum_x -= accel_x;
         }
       }
 
-      /**
-       * Block: Manipulate canvas
-       */
-
-      
-
-      float clockrotation = (float)iter/(float)period1;
-      float sin1 = sinf((float)iter/48.3f);
-      float sin2 = sinf((float)iter/49.0f);
-      struct ColorVec clr = getColorFromGradient(&beautiful,sin1);
-
-      // float armLength = (float)(width/4)*(sin2+1.0f);
-      // drawLineAngleSec(beall,width/2,height/2,clockrotation*6.282,width/8,armLength,&clr);
-      // for (i = 1; i < 9; i++) {
-      //   etchCircle(beall,width/2,height/2,width/i,&whitxe);
-      // }
+      boy_x_prev = boy_x;
+      boy_y_prev = boy_y;
       boy_y -= boy_momentum_y;
       boy_x += boy_momentum_x;
-      etchCircle(beall,boy_x,boy_y, boy_width/2,&clr);
-      etchCircle(beall,boy_x,boy_y, boy_width/2-1,&blaq);
-      etchCircle(beall,boy_x,boy_y, boy_width/2-2,&clr);
+
       if (boy_on_ground == 0)
         boy_momentum_y -= gravity_constant;
       else {
@@ -289,18 +341,47 @@ int main (int argc, char **argv)
         boy_x = width;
       }
 
+      /**
+       * Block: Manipulate canvas
+       */
+
+
+      // for (i = 0; i < beall->width; i++) {
+      //   float degree = (float)i/(float)beall->width;
+      //   degree += (float)(iter%1000)/1000.0f;
+      //   if (degree > 1.0f) degree -= 1.0f;
+      //   struct ColorVec clr = getColorFromGradient(&blackwhite,degree);
+      //   drawLine(beall,i,0,i,beall->height,&clr);
+      // }
+      
+
+      float clockrotation = (float)iter/(float)period1;
+      float sin1 = sinf((float)iter/48.3f);
+      float sin2 = sinf((float)iter/49.0f);
+      float iterstraight = (float)(iter % 100)/100.0f;
+      float iterstraight2 = (float)(iter % 1000)/1000.0f;
+      struct ColorVec clr = getColorFromGradient(&beautiful,sin1);
+      struct ColorVec clr2 = getColorFromGradient(&grnRedBlu,iterstraight);
+      struct ColorVec clr3 = getColorFromGradient(&beautiful,iterstraight);
+
+      etchCircle(beall,boy_x,boy_y, boy_width/2,&clr);
+      etchCircle(beall,boy_x,boy_y, boy_width/2-1,&blaq);
+      etchCircle(beall,boy_x,boy_y, boy_width/2-2,&clr2);
+
+
+
+      drawLine(zeal,boy_x_prev,boy_y_prev,boy_x,boy_y,&clr2);
       drawRect(beall,30,30,40,40,&yeller);
       drawRect(beall,30,40,40,50,&indigo);
       drawRect(beall,30,50,40,60,&bluebird);
-
-
-
       
 
       /**
        * Block: Draw X Image to screen 
        */
-      flashCanvasToXImage(beall,xim);
+      flashCanvasToXImage(beall,xim,0,0);
+      if (toggle_guy == 1 ) flashCanvasToXImage(zeal,xim,0,0);
+      if (workspace_display == 1 ) flashCanvasToXImage(workspaceWindow,xim,width/3,0);
       int ret = XPutImage(dis,win,gc,xim,0,0,0,0,xim->width,xim->height);
       
 
