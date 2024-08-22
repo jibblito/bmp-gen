@@ -22,7 +22,7 @@ struct Canvas {
 };
 
 void generateBitmapImage(struct Canvas *cvs);
-int flashCanvasToXImage(struct Canvas *cvs, XImage *xim);
+int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offset_y);
 unsigned char* createBitmapFileHeader(int height, int stride);
 unsigned char* createBitmapInfoHeader(int height, int width);
 struct Canvas *initCanvas(int width, int height, char *name);

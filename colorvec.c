@@ -42,19 +42,30 @@ struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree)
   struct ColorVec ret;
   float roughIndex;
   int indexFloor, indexCeil;
-  if (degree < 0.0f) degree = 0.0f;
-  if (degree > 1.0f) degree = 1.0f;
-  if (cvg->n_colors == 1) return cvg->gradient[0];
-
   int n_colors = cvg->n_colors;
+
+  if (n_colors == 1)
+    return cvg->gradient[0];
+
   if (cvg->loop == 1)
     n_colors++;
+
   roughIndex = degree * (float)(n_colors-1);
   indexFloor = floorf(roughIndex);
+
   if (cvg->loop == 1 && indexFloor == cvg->n_colors-1)
-      indexCeil = 0;
+    indexCeil = 0;
   else
     indexCeil = indexFloor + 1;
+
+  if (degree <= 0.0f)
+    return cvg->gradient[0];
+  if (degree >= 1.0f) {
+    if (cvg->loop == 1) 
+      return cvg->gradient[0];
+    else
+      return cvg->gradient[n_colors-1];
+  }
 
   float normalizedDegree = roughIndex - (float)indexFloor;
   ret.r = normalizedDegree * (float)cvg->gradient[indexCeil].r;

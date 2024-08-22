@@ -49,7 +49,8 @@ void generateBitmapImage(struct Canvas *cvs) {
 /**
  * Generate an XImage struct for da image
  */
-int flashCanvasToXImage(struct Canvas *cvs, XImage *xim) {
+int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offset_y) {
+  /*
   if (cvs->height != xim->height) {
     fprintf(stderr,"Canvas height does not match XImage height\n");
     return 1;
@@ -58,10 +59,11 @@ int flashCanvasToXImage(struct Canvas *cvs, XImage *xim) {
     fprintf(stderr,"Canvas width does not match XImage width\n");
     return 1;
   }
+  */
   int i,j;
   unsigned long pixel;
-  for (i = 0; i < cvs->height; i++) {
-    for (j = 0; j < cvs->width; j++) {
+  for (i = offset_y; i < cvs->height && i >= 0 && i < xim->height; i++) {
+    for (j = offset_x; j < cvs->width && j >= 0 && j < xim->width; j++) {
       memcpy(&pixel,cvs->image+i*cvs->rowlength+j*BYTES_PER_PIXEL,3);
       xim->f.put_pixel(xim,j,i,pixel);
     }
