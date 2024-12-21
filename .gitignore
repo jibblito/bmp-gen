@@ -7,3 +7,4 @@ bmp-gen
 *.mp4
 /obj
 aniimation/*
+plotting/doobie*
