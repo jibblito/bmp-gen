@@ -8,54 +8,34 @@
 #include <stdlib.h>
 #include "colorvec.h"
 #include "canvas.h"
+#include "shapes.h"
 
 /**
  * Plot a point on the canvas! The basic functionality-function of the
  * whole class of functions, yo!
  */
-int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr) {
+int plot(Canvas *cvs, int x, int y, ColorVec *clr) {
   if (x >cvs->width-1 || x < 0) {
     return 1;
   }
   if (y > cvs->height-1 || y < 0) {
     return 1;
   }
-  unsigned char* pixelpointer = cvs->image + ((int)y*cvs->rowlength + 
-                                ((int)x) * BYTES_PER_PIXEL);
-  *(pixelpointer + RED) = (unsigned char) clr->r;
-  *(pixelpointer + GREEN) = (unsigned char) clr->g;
-  *(pixelpointer + BLUE) = (unsigned char) clr->b;
+  unsigned int *pixpointer = cvs->image + y*cvs->width + x;
+  // Format for canvas: 
+  *pixpointer = 0x00000000;
+  *pixpointer |= (unsigned int) clr->r << RSHIFT_RED;
+  *pixpointer |= (unsigned int) clr->g << RSHIFT_GREEN;
+  *pixpointer |= (unsigned int) clr->b << RSHIFT_BLUE;
+  *pixpointer |= (unsigned int) clr->a << RSHIFT_ALPHA;
+  return 0;
 }
 
-
-/**
- * Draw a square of a set color!
- *
- * Needs to be improved to support other colors (easy fix, just lazy)
- * Also, there are too many arguments. How can we simplify to just x, y, width?
- *
- * @TODO: SIMPLIFY TO drawSquare(x,y,width,color);
- *  - unsigned char *image: could contain a data structure that includes rowlength....
- *  think about that - would simplify all functions in this file... with just an image to worry
- *  about instead of all these extra shitty parameters that just clog... they just clog.
- */
-int drawSquare(unsigned char *image, int rowlength, int x, int y, int width) {
-    int i,j;
-    for (i = x; i < x + width; i++) {
-      for (j = y; j < y + width; j++) {
-        unsigned char* pixelpointer = image + i*rowlength + j*BYTES_PER_PIXEL;
-        *(pixelpointer + 0) = (unsigned char) (200); //  Blue
-        *(pixelpointer + 1) = (unsigned char) (20); // greene
-        *(pixelpointer + 2) = (unsigned char) (55); // Red
-      }
-
-    }
-}
 
 /**
  * Draw a rectangle of a set color
  */
-int drawRect(struct Canvas *cvs, int x1, int y1, int x2, int y2, struct ColorVec* clr) {
+void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr) {
   int x_start, y_start, x_end, y_end;
 
   if (x1 <= x2) {
@@ -78,20 +58,45 @@ int drawRect(struct Canvas *cvs, int x1, int y1, int x2, int y2, struct ColorVec
 }
 
 /**
- * Draw a square of a set gradient!
- *
- * Needs to be improved to support other gradients.
+ * Etch a rectangle of a set color
  */
-int drawGradiSquare(unsigned char *image, int rowlength, int x, int y, int width) {
-    int i,j;
-    for (i = x; i < x + width; i++) {
-      for (j = y; j < y + width; j++) {
-        unsigned char* pixelpointer = image + i*rowlength + j*BYTES_PER_PIXEL;
-        *(pixelpointer + 0) = (unsigned char) (((float)i/(float)width)*255.0f); //  Blue
-        *(pixelpointer + 1) = (unsigned char) (20); // greene
-        *(pixelpointer + 2) = (unsigned char) (255); // Red
-      }
-    }
+void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec *clr) {
+  int x_start = x1, y_start = y1, x_end = x2, y_end = y2;
+
+	// Assign Ordering of X and Y
+  if (x1 > x2) {
+    x_start = x2;
+    x_end = x1;
+  } 
+	if (y1 > y2) {
+		y_start = y2;
+		y_end = y1;
+	}
+
+	int xr, yr;
+	for (xr = x_start; xr <= x_end; xr++) {
+		plot(cvs,xr,y_start,clr);
+		plot(cvs,xr,y_end,clr);
+	}
+	for (yr = y_start; yr <= y_end; yr++) {
+		plot(cvs,x_start,yr,clr);
+		plot(cvs,x_end,yr,clr);
+	}
+}
+
+/**
+ * Etch a rectangle w/ width and height, aka the best way!
+ */
+void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr) {
+	int xr = x, yr = y+1;
+	for (; xr <= xr + width; xr++) {
+		plot(cvs,xr,y,clr);
+		plot(cvs,xr,y+width,clr);
+	}
+	for (; yr <= yr + height; yr++) {
+		plot(cvs,x,yr,clr);
+		plot(cvs,x+width,yr,clr);
+	}
 }
 
 /**
@@ -100,7 +105,7 @@ int drawGradiSquare(unsigned char *image, int rowlength, int x, int y, int width
  * for simplicity and .. honestly I don't like antialiased lines that much...
  * Perhaps we can have another function drawAntiAliasedLine.. perhaps.
  */
-int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec* clr) {
+void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, ColorVec* clr) {
 
   int x_start, y_start, x_end, y_end;
 
@@ -141,27 +146,26 @@ int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec*
   }
 }
 
-int drawLineAngle(struct Canvas *cvs, int x,int y, float radians, int length, struct ColorVec* clr) {
+void drawLineAngle(Canvas *cvs, int x,int y, float radians, int length, ColorVec* clr) {
   int x_offset, y_offset;
   x_offset = sinf(radians) * length;
   y_offset = cosf(radians) * length;
-  return drawLine(cvs,x,y,x+x_offset,y+y_offset,clr);
 }
 
-int drawLineAngleSec(struct Canvas *cvs, int x,int y, float radians, int slength, int elength, struct ColorVec* clr) {
-  if (slength > elength) return 0;
+void drawLineAngleSec(Canvas *cvs, int x,int y, float radians, int slength, int elength, ColorVec* clr) {
+  if (slength > elength) return;
   int sx_offset, sy_offset, ex_offset, ey_offset;
   sx_offset = sinf(radians) * slength;
   sy_offset = cosf(radians) * slength;
   ex_offset = sinf(radians) * elength;
   ey_offset = cosf(radians) * elength;
-  return drawLine(cvs,x+sx_offset,y+sy_offset,x+ex_offset,y+ey_offset,clr);
+  drawLine(cvs,x+sx_offset,y+sy_offset,x+ex_offset,y+ey_offset,clr);
 }
 
 /**
  * Etch (outline) a circle, dude!
  */
-int etchCircle(struct Canvas *cvs, int x, int y, int radius, struct ColorVec *clr) {
+void etchCircle(Canvas *cvs, int x, int y, int radius, ColorVec *clr) {
   int rel_x = radius;
   int rel_y = 0;
   plot(cvs,x+rel_x,y+rel_y,clr);
@@ -213,6 +217,6 @@ int etchCircle(struct Canvas *cvs, int x, int y, int radius, struct ColorVec *cl
 /**
  * Draw a triangle. Utilizes other helper functions such as draw line.
  */
-int drawTriangle(unsigned char *image, int rowlength, int t1, int t2, int t3) {
+void drawTriangle(unsigned char *image, int rowlength, int t1, int t2, int t3) {
     //stub
 }

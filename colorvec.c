@@ -17,16 +17,23 @@ void initColor(struct ColorVec *clr, unsigned char r, unsigned char g, unsigned 
   clr->r = r;
   clr->g = g;
   clr->b = b;
+  clr->a = 0xff;
 }
 
-void initColorHex(struct ColorVec *clr, unsigned long hex) {
-  clr->r = hex>>(RED*8);
-  clr->g = hex>>(GREEN*8);
-  clr->b = hex>>(BLUE*8);
+/*
+ * Initialize a hex color from input unsigned int:
+ * 0xRRGGBB or 0xAARRGGBB
+ */
+void initColorHex(struct ColorVec *clr, unsigned int hex) {
+  clr->r = hex>>16;
+  clr->g = hex>>8;
+  clr->b = hex>>0;
+  if ((clr->a = hex>>24) == 0x00) // Assume missing Alpha component means full alpha
+    clr->a = 0xff;
 }
 
 void printColorVec(struct ColorVec *clr) {
-  printf("Red:%c\nGreen:%c\nBlue:%c\n",clr->r,clr->g,clr->b);
+  printf("Red:%d\nGreen:%d\nBlue:%d\nAlpha:%d\n",clr->r,clr->g,clr->b,clr->a);
 }
 
 
@@ -35,11 +42,12 @@ void addColorToColorVecGradient(struct ColorVecGradient *cvg, struct ColorVec *c
   cvg->gradient[cvg->n_colors].r = clr->r;
   cvg->gradient[cvg->n_colors].g = clr->g;
   cvg->gradient[cvg->n_colors].b = clr->b;
+  cvg->gradient[cvg->n_colors].a = clr->a;
   cvg->n_colors = cvg->n_colors + 1;
 }
 
 struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree) {
-  struct ColorVec ret;
+  struct ColorVec ret = { .a = 0xff };
   float roughIndex;
   int indexFloor, indexCeil;
   int n_colors = cvg->n_colors;
@@ -77,6 +85,16 @@ struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree)
   return ret;
 }
 
+void printGradient(struct ColorVecGradient *gradient) {
+	int i;
+	printf("Gradient: %d colors [R,G,B,A] ");
+	printf((gradient->loop) ? "(Looping)\n" : "(Non-Looping)\n");
+	for (i = 0; i < gradient-> n_colors; i++) {
+		struct ColorVec clr = gradient->gradient[i];
+		printf("%d:[%d,%d,%d,%d]\n",i,clr.r,clr.g,clr.b,clr.a);
+	}
+}
+
 struct ColorVec combineColors(struct ColorVec *a, struct ColorVec *b, float degree) {
   struct ColorVec ret;
   if (degree < 0) degree = 0;
@@ -86,3 +104,13 @@ struct ColorVec combineColors(struct ColorVec *a, struct ColorVec *b, float degr
   ret.b = degree * a->b + (1-degree) * b->b;
   return ret;
 }
+
+struct ColorVec invertColor(struct ColorVec *clr) {
+	struct ColorVec ret;
+	ret.r = 0xff - clr->r;
+	ret.g = 0xff - clr->g;
+	ret.b = 0xff - clr->b;
+	ret.a = 0xff;
+	return ret;
+}
+ 

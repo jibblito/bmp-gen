@@ -6,14 +6,14 @@
 
 int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr);
 
-
-int drawSquare(char *image, int rowlength, int x, int y, int width);
-int drawRect(struct Canvas *cvs, int x1, int y1, int x2, int y2, struct ColorVec* clr);
-int drawGradiSquare(unsigned char *image, int rowlength, int x, int y, int width);
-int drawLine(struct Canvas *cvs, int x1,int y1, int x2, int y2, struct ColorVec* clr);
-int drawLineAngle(struct Canvas *cvs, int x,int y, float radians, int length, struct ColorVec* clr);
-int drawLineAngleSec(struct Canvas *cvs, int x,int y, float radians, int slength, int elength, struct ColorVec* clr);
-int etchCircle(struct Canvas *cvs, int x, int y, int radius, struct ColorVec *clr);
-int drawTriangle(unsigned char *image, int rowlength, int t1, int t2, int t3);
+void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr);
+void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr);
+void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr);
+void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, ColorVec* clr);
+void drawLineAngle(Canvas *cvs, int x,int y, float radians, int length,  ColorVec* clr);
+void drawLineAngleSec( Canvas *cvs, int x,int y, float radians, int slength, int elength,  ColorVec* clr);
+void etchCircle(Canvas *cvs, int x, int y, int radius, ColorVec *clr);
+void fillCircle(Canvas *cvs, int x, int y, int radius, ColorVec *clr);
+void drawTriangle(unsigned char *image, int rowlength, int t1, int t2, int t3);
 
 #endif
