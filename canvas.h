@@ -10,16 +10,15 @@
  */
 
 #define MAX_FILENAME_LENGTH 32
-#define BYTES_PER_PIXEL 3
+#define BYTES_PER_PIXEL 4
 #define FILE_HEADER_SIZE 14 // length in bytes of header
 #define INFO_HEADER_SIZE 40 // length in bytes of info header
 
-struct Canvas {
+typedef struct Canvas {
   int height, width;
-  int rowlength;
   char name[MAX_FILENAME_LENGTH];
-  unsigned char image[];
-};
+  unsigned int image[];
+} Canvas;
 
 void generateBitmapImage(struct Canvas *cvs);
 int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offset_y);

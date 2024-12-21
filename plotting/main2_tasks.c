@@ -26,7 +26,8 @@ int main (int argc, char** argv) {
 
   // Initialize Task Locations
   
-  int n_tasks = 3;
+  /*
+  int n_tasks = 5;
   Vec2d tasks_1[3] = {
      {ARENA_WIDTH_IN_PIXELS/2,ARENA_WIDTH_IN_PIXELS/4*3},
      {ARENA_WIDTH_IN_PIXELS/4*1,ARENA_WIDTH_IN_PIXELS/4*1},
@@ -40,6 +41,7 @@ int main (int argc, char** argv) {
   float pi_desired[3] = {
     0.33, 0.33, 0.33
   };
+  */
 
   /*
   int n_tasks = 2;
@@ -76,7 +78,6 @@ int main (int argc, char** argv) {
   */
 
 
-  /*
   int n_tasks = 5;
   Vec2d tasks_1[5] = {
      {ARENA_WIDTH_IN_PIXELS/6*1,ARENA_WIDTH_IN_PIXELS/6*1},
@@ -93,11 +94,10 @@ int main (int argc, char** argv) {
      {ARENA_WIDTH_IN_PIXELS/6*5,ARENA_WIDTH_IN_PIXELS/6*3}
   };
   float pi_desired[5] = {
-    0.2,0.2,0.2,0.2,0.2
+    0.6,0.1,0.1,0.1,0.1
   };
-  */
 
-  int n_robots = n_tasks;
+  int n_robots = n_tasks*2;
 
   ARENA *arena = initArena(n_robots,ARENA_WIDTH_IN_PIXELS,1);
 

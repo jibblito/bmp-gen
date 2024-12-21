@@ -18,6 +18,7 @@
 #include "shapes.h"
 #include "canvas.h"
 #include "colorvec.h"
+#include "sprites.h"
 #include "transformations.c"
 #include <X11/Xutil.h>
 
@@ -63,6 +64,71 @@ int drawBall(Entity *self, struct Canvas *cvs, struct ColorVec *clr) {
   etchCircle(cvs,self->x,self->y,self->width/2,clr);
 }
 
+int drawSquareEnt(Entity *self, struct Canvas *cvs, struct ColorVec *clr) {
+  int x2 = self->x + self->width;
+  int y2 = self->y + self->height;
+  int width = self->width;
+  etchRect(cvs,self->x,self->y,x2,y2,clr);
+  etchCircle(cvs,self->x+width/3,self->y+width/5,width/7,clr);
+  etchCircle(cvs,self->x+(width/3)*2,self->y+(width/5)*4,width/8,clr);
+  etchCircle(cvs,self->x+(width/6)*5,self->y+width/4,width/9,clr);
+}
+
+int doesCollide(int x, int y) {
+  int i;
+  for (i = 0; i < n_entities; i++) {
+    Entity *e = &entities[i];
+    int xFix;
+  }
+  return 0;
+}
+
+/*
+ * Returns the amount in the x direction that an object intersects badly
+ */
+int collidesX(int t_lbound, int t_rbound) {
+  int i;
+  for (i = 0; i < n_entities; i++) {
+    Entity *e = &entities[i];
+    if (e->type != SQUARE) continue;
+    int e_lbound = e->x;
+    int e_rbound = e_lbound + e->width;
+
+    // case: target left w/ entity bounds: return +x on intersect
+    int left_rightof_left = t_lbound - e_lbound;
+    int left_leftof_right = e_rbound - t_lbound;
+    if (left_rightof_left >= 0 && left_leftof_right >= 0) return left_leftof_right;
+
+    // case: target right w/ entity bounds: return -x on intersect
+    int el_minus_tr = e_lbound - t_rbound;
+    int tr_minus_er = t_rbound - e_rbound;
+    if (el_minus_tr <= 0 && tr_minus_er <= 0) return el_minus_tr;
+  }
+  return 0;
+}
+
+int collidesY(int t_lbound, int t_ubound) {
+  int i;
+  for (i = 0; i < n_entities; i++) {
+    Entity *e = &entities[i];
+    if (e->type != SQUARE) continue;
+    int e_lbound = e->y;
+    int e_ubound = e_lbound + e->height;
+
+    // case: target lower: return +y on intersect
+    int tl_min_el = t_lbound-e_lbound;
+    int eu_min_tl = e_ubound-t_lbound;
+    if (tl_min_el >= 0 && eu_min_tl >= 0) return eu_min_tl;
+
+    // case: target upper: return -y on intersect
+    int el_minus_tu = e_lbound - t_ubound;
+    int tu_minus_eu = t_ubound - e_ubound;
+    if (el_minus_tu <= 0 && tu_minus_eu <= 0) return el_minus_tu;
+  }
+  return 0;
+
+}
+
 /**
  * Entity control in the world. Kind of has nothing to do with bmp-gen, so we
  * gonna move it later. This all has nothing to do with bmp-gen really.
@@ -84,6 +150,11 @@ int addEntityToWorld(int x, int y, int type) {
         newEntity.height = 20;
         newEntity.drawEntity = drawBall;
         break;
+      case SQUARE:
+        newEntity.width = 50;
+        newEntity.height = 50;
+        newEntity.drawEntity = drawSquareEnt;
+        break;
       default:
         return 1;
     }
@@ -99,8 +170,11 @@ int addEntityToWorld(int x, int y, int type) {
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 600;
-    int width = 600;
+    int height = 480;
+    int width = 480;
+
+    struct Sprite googah;
+    loadSpriteFromFile(&googah, "cheese.bmp");
 
     int save_file = 0;
 
@@ -131,9 +205,9 @@ int main (int argc, char **argv)
     int explorerWidth = width / 3;
     struct Canvas *workspaceWindow = initCanvas(explorerWidth, height, "explorer.bmp");
 
-    INIT_COLOR(blue,0x0000ff);
     INIT_COLOR(red,0xff0000);
     INIT_COLOR(green,0x00ff00);
+    INIT_COLOR(blue,0x0000ff);
     INIT_COLOR(slack_blue,0x321eb1);
     INIT_COLOR(fuschia,0xe60368);
     INIT_COLOR(yeller,0xf9db17);
@@ -142,10 +216,13 @@ int main (int argc, char **argv)
     INIT_COLOR(whitxe,0xffffff);
     INIT_COLOR(blaq,0x000000);
 
+    drawRect(workspaceWindow,0,0,workspaceWindow->width,workspaceWindow->height,&bluebird);
+
     struct ColorVecGradient gradient1;
     gradient1.n_colors = 0;
     addColorToColorVecGradient(&gradient1,&green);
     addColorToColorVecGradient(&gradient1,&blue);
+		printGradient(&gradient1);
 
     struct ColorVecGradient gradient2;
     gradient2.n_colors = 0;
@@ -333,8 +410,15 @@ int main (int argc, char **argv)
             break;
           case ButtonPress:
             XButtonEvent xbutton = event.xbutton;
-            printf("x:%d,y:%d\n",xbutton.x,xbutton.y);
-            addEntityToWorld(xbutton.x,xbutton.y,BALL);
+            switch(xbutton.button) {
+              case Button1:
+                addEntityToWorld(xbutton.x,xbutton.y,BALL);
+                break;
+              case Button3:
+                addEntityToWorld(xbutton.x,xbutton.y,SQUARE);
+                break;
+              break;
+            }
             break;
         }
         break;
@@ -345,126 +429,137 @@ int main (int argc, char **argv)
        * Block: Change state of game based on input
        */
 
-      if (boy_on_ground) {
-        if (acceling_right || right_pressed) {
-          boy_momentum_x += accel_x;
-        }
+      // if (boy_on_ground) {
+      //   if (acceling_right || right_pressed) {
+      //     boy_momentum_x += accel_x;
+      //   }
 
-        if (acceling_left || left_pressed) {
-          boy_momentum_x -= accel_x;
-        }
-      }
+      //   if (acceling_left || left_pressed) {
+      //     boy_momentum_x -= accel_x;
+      //   }
+      // }
 
-      boy_x_prev = boy_x;
-      boy_y_prev = boy_y;
-      boy_y -= boy_momentum_y;
-      boy_x += boy_momentum_x;
+      // boy_x_prev = boy_x;
+      // boy_y_prev = boy_y;
+      // boy_y -= boy_momentum_y;
+      // boy_x += boy_momentum_x;
 
-      if (boy_on_ground == 0)
-        boy_momentum_y -= gravity_constant;
-      else {
-        if (boy_momentum_x < 0-friction_constant)
-          boy_momentum_x += friction_constant;
-        else if (boy_momentum_x > friction_constant)
-          boy_momentum_x -= friction_constant;
-        else
-          boy_momentum_x = 0;
-      }
+      // if (boy_on_ground == 0)
+      //   boy_momentum_y -= gravity_constant;
+      // else {
+      //   if (boy_momentum_x < 0-friction_constant)
+      //     boy_momentum_x += friction_constant;
+      //   else if (boy_momentum_x > friction_constant)
+      //     boy_momentum_x -= friction_constant;
+      //   else
+      //     boy_momentum_x = 0;
+      // }
 
-      if (boy_y < 0) {
-        boy_y = 0;
-        boy_momentum_y = 0;
-      }
-      if (boy_y > height) {
-        boy_on_ground = 1;
-        boy_y = height;
-        boy_momentum_y = 0;
-      }
-      if (boy_x <= 0) {
-        boy_momentum_x = 0;
-        boy_x = 0;
-      }
-      if (boy_x > width) {
-        boy_momentum_x = 0;
-        boy_x = width;
-      }
+      // if (doesCollide(boy_x,boy_y)) {
+      //   boy_x++;
+      // }
 
-      /**
-       * Block: Change natural state of game
-       */
+      // int correctionX = collidesX(boy_x,boy_x+boy_width);
+      // int correctionY = collidesY(boy_y,boy_y+boy_width);
+      // if (correctionX != 0) {
+      //   boy_x += correctionX;
+      //   boy_momentum_x = 0;
+      // }
 
-      for (i = 0; i < n_entities; i++) {
-        Entity *e = &entities[i];
-        // Move entities
-        e->x += e->m_x;
-        e->y -= e->m_y;
+      // if (boy_y < 0) {
+      //   boy_y = 0;
+      //   boy_momentum_y = 0;
+      // }
+      // if (boy_y > height) {
+      //   boy_on_ground = 1;
+      //   boy_y = height;
+      //   boy_momentum_y = 0;
+      // }
+      // if (boy_x <= 0) {
+      //   boy_momentum_x = 0;
+      //   boy_x = 0;
+      // }
+      // if (boy_x > width) {
+      //   boy_momentum_x = 0;
+      //   boy_x = width;
+      // }
 
-        // Adjust thinges
-        e->m_y -= gravity_constant;
-        if (e->y < 0) {
-          e->y = 0;
-          e->m_y *= -1;
-        }
-        if (e->y > height-1) {
-          e->y = height-1;
-          e->m_y *= -1;
-          e->m_x < 0 ? e->m_x-- : e->m_x++;
-        }
-        if (e->x <= 0) {
-          e->x = 0;
-          e->m_x *= -1;
-        }
-        if (e->x > width-1) {
-          e->x = width-1;
-          e->m_x *= -1;
-        }
-      }
+      // /**
+      //  * Block: Change natural state of game
+      //  */
+
+      // for (i = 0; i < n_entities; i++) {
+      //   Entity *e = &entities[i];
+      //   // Move entities
+      //   if (e->type==SQUARE) continue;
+      //   e->x += e->m_x;
+      //   e->y -= e->m_y;
+
+      //   e->m_y -= gravity_constant;
+      //   if (e->y < 0) {
+      //     e->y = 0;
+      //     e->m_y = 0;
+      //   }
+      //   if (e->y > height-1) {
+      //     e->y = height-1;
+      //     e->m_y = (e->m_y *-1) /2;
+      //   }
+      //   if (e->x <= 0) {
+      //     e->x = 0;
+      //     e->m_x *= -1;
+      //   }
+      //   if (e->x > width-1) {
+      //     e->x = width-1;
+      //     e->m_x *= -1;
+      //   }
+      //   if (e->m_x > 10 || e->m_x < -10) e->m_x = 0;
+      // }
 
       /**
        * Block: Manipulate canvas
        */
 
+      drawRect(beall,0,0,width,height,&blaq);
+      drawRect(beall,width*9/10,width*9/10,width/10,height/10,&yeller);
+      etchCircle(beall,width/3,height/3,width/4,&fuschia);
 
-      // for (i = 0; i < beall->width; i++) {
-      //   float degree = (float)i/(float)beall->width;
-      //   degree += (float)(iter%1000)/1000.0f;
-      //   if (degree > 1.0f) degree -= 1.0f;
-      //   struct ColorVec clr = getColorFromGradient(&blackwhite,degree);
-      //   drawLine(beall,i,0,i,beall->height,&clr);
-      // }
-      
+      // float clockrotation = (float)iter/(float)period1;
+      // float sin1 = sinf((float)iter/48.3f);
+      // float sin2 = sinf((float)iter/49.0f);
+      // float iterstraight = (float)(iter % 100)/100.0f;
+      // float iterstraight2 = (float)(iter % 1000)/1000.0f;
+      // struct ColorVec clr = getColorFromGradient(&beautiful,sin1);
+      // struct ColorVec clr2 = getColorFromGradient(&grnRedBlu,iterstraight);
+      // struct ColorVec clr3 = getColorFromGradient(&beautiful,iterstraight);
 
-      float clockrotation = (float)iter/(float)period1;
-      float sin1 = sinf((float)iter/48.3f);
-      float sin2 = sinf((float)iter/49.0f);
-      float iterstraight = (float)(iter % 100)/100.0f;
-      float iterstraight2 = (float)(iter % 1000)/1000.0f;
-      struct ColorVec clr = getColorFromGradient(&beautiful,sin1);
-      struct ColorVec clr2 = getColorFromGradient(&grnRedBlu,iterstraight);
-      struct ColorVec clr3 = getColorFromGradient(&beautiful,iterstraight);
-
-      etchCircle(beall,boy_x,boy_y, boy_width/2,&clr);
-      etchCircle(beall,boy_x,boy_y, boy_width/2-1,&blaq);
-      etchCircle(beall,boy_x,boy_y, boy_width/2-2,&clr2);
+      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2,&clr);
+      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2-1,&blaq);
+      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2-2,&clr2);
 
 
 
-      drawLine(zeal,boy_x_prev,boy_y_prev,boy_x,boy_y,&clr2);
+      // drawLine(zeal,boy_x_prev,boy_y_prev,boy_x,boy_y,&clr2);
       drawRect(beall,30,30,40,40,&yeller);
       drawRect(beall,30,40,40,50,&indigo);
       drawRect(beall,30,50,40,60,&bluebird);
+      drawSpriteToCanvas(beall,&googah,100,100);
 
-      for (i = 0; i < n_entities; i++) {
-        entities[i].drawEntity(&entities[i],beall,&yeller);
-      }
+      drawRect(beall,50,50,60,60,&red);
+      drawRect(beall,50,50,60,60,&green);
+      drawRect(beall,50,50,60,60,&blue);
+      drawRect(beall,1,1,11,11,&red);
+
+      // for (i = 0; i < n_entities; i++) {
+      //   entities[i].drawEntity(&entities[i],beall,&yeller);
+      // }
       
 
       /**
        * Block: Draw X Image to screen 
        */
       flashCanvasToXImage(beall,xim,0,0);
-      if (toggle_guy == 1 ) flashCanvasToXImage(zeal,xim,0,0);
-      if (workspace_display == 1 ) flashCanvasToXImage(workspaceWindow,xim,width/3,0);
+      // if (toggle_guy == 1 ) flashCanvasToXImage(zeal,xim,0,0);
+      // if (workspace_display == 1 ) flashCanvasToXImage(workspaceWindow,xim,(width/3)*2,0);
       int ret = XPutImage(dis,win,gc,xim,0,0,0,0,xim->width,xim->height);
       
 
@@ -497,4 +592,5 @@ int main (int argc, char **argv)
     }
 
     free(beall);
+    destroySprite(&googah);
 }

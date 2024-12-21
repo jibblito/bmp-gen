@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "canvas.h"
+#include "colorvec.h"
 
 
 
@@ -13,11 +14,10 @@
  *  HEIGHT (4) | WIDTH (4) | ROWLENGTH (4) | NAME (32) | IMAGE (variable)
  */
 struct Canvas *initCanvas(int width, int height, char *name) {
-  size_t n_bytes = sizeof(struct Canvas) + height*width*BYTES_PER_PIXEL*sizeof(unsigned char);
-  struct Canvas *cvs = malloc(n_bytes); 
+  size_t n_bytes = sizeof(struct Canvas) + height*width*sizeof(unsigned int);
+  struct Canvas *cvs = calloc(n_bytes, 1); 
   cvs->height = height;
   cvs->width = width;
-  cvs->rowlength = width * BYTES_PER_PIXEL;
   snprintf(cvs->name,sizeof(cvs->name), name);
   return cvs;
 }
@@ -50,26 +50,69 @@ void generateBitmapImage(struct Canvas *cvs) {
  * Generate an XImage struct for da image
  */
 int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offset_y) {
-  /*
-  if (cvs->height != xim->height) {
-    fprintf(stderr,"Canvas height does not match XImage height\n");
-    return 1;
+  int redLShift, blueLShift, greenLShift;
+  int i;
+  for (i = 0; i < 32; i++) {
+    if (0x01 << i & xim->red_mask) break;
   }
-  if (cvs->width != xim->width) {
-    fprintf(stderr,"Canvas width does not match XImage width\n");
-    return 1;
+  redLShift = i;
+  for (i = 0; i < 32; i++) {
+    if (0x01 << i & xim->green_mask) break;
   }
-  */
-  int i,j;
-  unsigned long pixel;
-  for (i = offset_y; i < cvs->height && i >= 0 && i < xim->height; i++) {
-    for (j = offset_x; j < cvs->width && j >= 0 && j < xim->width; j++) {
-      memcpy(&pixel,cvs->image+i*cvs->rowlength+j*BYTES_PER_PIXEL,3);
-      xim->f.put_pixel(xim,j,i,pixel);
+  greenLShift = i;
+  for (i = 0; i < 32; i++) {
+    if (0x01 << i & xim->blue_mask) break;
+  }
+  blueLShift = i;
+
+  int j;
+  unsigned int pixel;
+  for (i = offset_y; i < cvs->height+offset_y && i < xim->height; i++) {
+    for (j = offset_x; j < cvs->width+offset_x && j < xim->width; j++) {
+      pixel = *(cvs->image+i*cvs->width+j);
+      // translate RGBA to XImage's pixel format
+      unsigned int xPixel = pixel >> RSHIFT_RED << redLShift & xim->red_mask;
+      xPixel |= pixel >> RSHIFT_GREEN << greenLShift & xim->green_mask;
+      xPixel |= pixel >> RSHIFT_BLUE << blueLShift & xim->blue_mask;
+      unsigned char alpha;
+      if ((alpha = (unsigned char)(pixel >> RSHIFT_ALPHA)) != 0xff) {
+        /*
+         * Deal with compositing
+         */
+        unsigned int beforePixel = xim->f.get_pixel(xim,j,i);
+        // xim->f.put_pixel(xim,j,i,0xffff0000);
+      } else {
+        xim->f.put_pixel(xim,j,i,xPixel);
+      }
     }
   }
   return 0;
 }
+
+struct BitmapFile {
+  struct FileHeader {
+    unsigned char signature  [2]; // 0x424D (BM) for a BMP file - other types are possible but not supported here
+    unsigned char file_size  [4]; // size of the BMP file in bytes
+    unsigned char reserved_1 [2]; // reserved
+    unsigned char reserved_2 [2]; // reserved
+    unsigned char offset     [4]; // Starting address of the byte where the pixel array can be found
+  } f_header;
+  struct InfoHeader {
+    unsigned char header_size [4];  // size of this header (typically 40)
+    unsigned char bm_width    [4];  // Width in pixels of da image
+    unsigned char bm_height   [4];  // Height in pixels of da image
+    unsigned char n_color_planes [2]; // Number of color planes (must be 1)
+    unsigned char bits_per_pixel [2]; // Number of bits per pixel (color depth o' th'image): 1, 4, 8, 16, 24, 32
+    unsigned char compression_method [4]; // There are many multiple compression methods on Wikipedia, yo.
+    unsigned char raw_image_size     [4]; // Size of the raw bitmap data
+    unsigned char horizontal_res [4];  // Horizontal resolution, yo (pixel per metre)
+    unsigned char vertical_res   [4];  // Vertical resolution, yo
+    unsigned char n_colors       [4];  // Number of colors in color palette
+    unsigned char n_imp_colors   [4];  // Number of important colors in color palette
+  } i_header;
+  unsigned char first_pixel;
+};
+
 
 
 /**

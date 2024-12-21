@@ -3,12 +3,15 @@
 
 #include "canvas.h"
 #include "colorvec.h"
+#include <stdint.h>
 
 struct Sprite {
-  int height,width;
-  unsigned char pixels[];
-}
+  int width,height;
+  uint32_t *pixels;
+};
 
 void loadSpriteFromFile(struct Sprite *sprite, char *filename);
+void drawSpriteToCanvas(struct Canvas *cvs, struct Sprite *sprite, int x, int y);
+void destroySprite(struct Sprite *sprite);
 
 #endif
