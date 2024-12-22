@@ -135,10 +135,11 @@ int main (int argc, char **argv)
 		int lag_detected = 0;
 
 
-		int plib_x = 115, plib_y = 115, plib_width = 70, plib_height = 70;
+		int plib_width = 40, plib_height = 80;
+		int plib_x = 20, plib_y = 100;
 		int plib_active;
 
-		int sqrt= 6;
+		int sqrt = 60;
 		int hl_x = -1;
 		int hl_y = -1;
 
@@ -175,16 +176,33 @@ int main (int argc, char **argv)
               case XK_space:
                 break;
               case XK_a:
+								plib_x-=10;
+								if (plib_x < 10) plib_x = 10;
                 break;
               case XK_d:
+								plib_x+=10;
+								if (plib_x + plib_width > beall->width-10) plib_x = beall->width-plib_width-10;
+                break;
+              case XK_w:
+								plib_y-=10;
+								if (plib_y < 10) plib_y = 10;
+                break;
+              case XK_s:
+								plib_y+=10;
+								if (plib_y + plib_height > beall->height-10) plib_y = beall->height-plib_height-10;
                 break;
               case XK_Left:
-                sqrt--;
-								if (sqrt < 1) sqrt= 1;
+								do
+									sqrt--;
+								while (sqrt != 0 && width % sqrt != 0);
+								if (sqrt < 1) sqrt = 1;
 								printf("Sqrt chang'd to %d.\n",sqrt);
                 break;
               case XK_Right:
-                sqrt++;
+								do
+									sqrt++;
+								while (width % sqrt != 0 && sqrt < width/4);
+								if (sqrt > width/4) sqrt = width/4;
 								printf("Sqrt chang'd to %d.\n",sqrt);
                 break;
             }
@@ -219,7 +237,6 @@ int main (int argc, char **argv)
        * Block: Change state of game based on input
        */
 
-
 			// Check our little button for pressage!
 			if (hl_x>=plib_x&&hl_x<plib_x+plib_width&&hl_y>=plib_y&&hl_y<plib_y+plib_height)
 				plib_active = 1;
@@ -241,14 +258,27 @@ int main (int argc, char **argv)
 					i/sqrt%2==0?
 						etchRectWH(beall,i%sqrt*chunckwid,i/sqrt*chunckhei,chunckwid,chunckhei,i%2==0?&C_white:&C_black):
 						etchRectWH(beall,i%sqrt*chunckwid,i/sqrt*chunckhei,chunckwid,chunckhei,i%2!=0?&C_white:&C_black);
-
 			for (i = 0; i < sqrt*sqrt; i++)
 				sqrt%2==1?
-					fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2==0?&C_yeller:i/sqrt%2==0?&C_bluebird:&C_indigo):
+					etchRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2!=0?&C_white:&C_black):
+					i/sqrt%2==1?
+						etchRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2==0?&C_white:&C_black):
+						etchRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2!=0?&C_white:&C_black);
+			for (i = 0; i < sqrt*sqrt; i++)
+				sqrt%2==1?
+					fillRectWH(beall,i%sqrt*chunckwid+2,i/sqrt*chunckhei+2,chunckwid-4,chunckhei-4,i%2==0?&C_yeller:i/sqrt%2==0?&C_bluebird:&C_indigo):
 					i/sqrt%2==0?
-						fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2==0?&C_yeller:&C_bluebird):
-						fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2!=0?&C_yeller:&C_indigo);
+						fillRectWH(beall,i%sqrt*chunckwid+2,i/sqrt*chunckhei+2,chunckwid-4,chunckhei-4,i%2==0?&C_yeller:&C_bluebird):
+						fillRectWH(beall,i%sqrt*chunckwid+2,i/sqrt*chunckhei+2,chunckwid-4,chunckhei-4,i%2!=0?&C_yeller:&C_indigo);
 
+
+drawplib:
+			etchRectWH(beall,plib_x,plib_y,plib_width,plib_height,&C_black);
+			plib_active?
+			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_red):
+			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_white);
+      
+drawdebuglogo:
 			etchRectWH(beall,41,39,20,42,&C_red);
 			int logoRange = 40;
 			ColorVec temp;
@@ -256,7 +286,6 @@ int main (int argc, char **argv)
 				temp = getColorFromGradient(&G_blackwhite,(float)i/(float)(logoRange-1));
 				drawLine(beall,41,40+i,61,40+i,&temp);
 			}
-      
 			etchRectWH(beall,29,29,12,62,&C_red);
 			fillRectWH(beall,30,30,10,10,&C_yeller);
 			fillRectWH(beall,30,40,10,10,&C_indigo);
@@ -273,10 +302,6 @@ int main (int argc, char **argv)
       etchRectWH(beall,50,50,20,20,&C_black);
       etchRectWH(beall,50,70,20,20,&C_white);
 
-			etchRectWH(beall,plib_x,plib_y,plib_width,plib_height,&C_black);
-			plib_active?
-			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_red):
-			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_white);
 
       /**
        * Block: Draw X Image to screen 
@@ -284,7 +309,6 @@ int main (int argc, char **argv)
 			
       flashCanvasToXImage(beall,xim,0,0);
       int ret = XPutImage(dis,win,gc,xim,0,0,0,0,xim->width,xim->height);
-      
 
       endFrameCalc = get_time();
       frameCalcTotal = (endFrameCalc - startFrameCalc)*1000000.0f;
