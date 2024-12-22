@@ -57,6 +57,18 @@ void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr) {
   }
 }
 
+// Could we exploit continuity of memory here? For example - rows of pixels
+// are contiguous in memory. Could use some sort of SIMD to make that become
+// dope.
+void fillRectWH(Canvas *cvs, int x, int y, int w, int h, ColorVec* clr) {
+	int xr = x, yr;
+	for (; xr < x + w; xr++) {
+		for (yr = y; yr < y + h; yr++) {
+			plot(cvs,xr,yr,clr);
+		}
+	}
+}
+
 /**
  * Etch a rectangle of a set color
  */
@@ -89,13 +101,13 @@ void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec *clr) {
  */
 void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr) {
 	int xr = x, yr = y+1;
-	for (; xr <= xr + width; xr++) {
+	for (; xr < x + width; xr++) {
 		plot(cvs,xr,y,clr);
-		plot(cvs,xr,y+width,clr);
+		plot(cvs,xr,y+height-1,clr);
 	}
-	for (; yr <= yr + height; yr++) {
+	for (; yr < y + height; yr++) {
 		plot(cvs,x,yr,clr);
-		plot(cvs,x+width,yr,clr);
+		plot(cvs,x+width-1,yr,clr);
 	}
 }
 

@@ -23,11 +23,11 @@ void initColor(struct ColorVec *clr, unsigned char r, unsigned char g, unsigned 
 void initColorHex(struct ColorVec *clr, unsigned int hex);
 void printColorVec(struct ColorVec *clr);
 
-struct ColorVecGradient {
+typedef struct ColorVecGradient {
   struct ColorVec gradient[MAX_GRADIENT_COLORS];
   int loop;
   int n_colors;
-};
+} ColorVecGradient;
 
 void addColorToColorVecGradient(struct ColorVecGradient *cvg, struct ColorVec *clr);
 struct ColorVec getColorFromGradient(struct ColorVecGradient *cvg, float degree);

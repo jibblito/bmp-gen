@@ -7,6 +7,7 @@
 int plot(struct Canvas *cvs, int x, int y, struct ColorVec *clr);
 
 void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr);
+void fillRectWH(Canvas *cvs, int x, int y, int w, int h, ColorVec* clr);
 void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr);
 void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr);
 void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, ColorVec* clr);

@@ -56,6 +56,8 @@ struct Entity {
 Entity entities[MAX_ENTITIES] = { 0 };
 int n_entities = 0;
 
+int toggleAnimation();
+
 int drawPlayer(Entity *self, struct Canvas *cvs, struct ColorVec *clr) {
   drawRect(cvs,self->x,self->y,self->width,self->height,clr);
 }
@@ -170,8 +172,8 @@ int addEntityToWorld(int x, int y, int type) {
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 480;
-    int width = 480;
+    int height = 600;
+    int width = 600;
 
     struct Sprite googah;
     loadSpriteFromFile(&googah, "cheese.bmp");
@@ -205,38 +207,43 @@ int main (int argc, char **argv)
     int explorerWidth = width / 3;
     struct Canvas *workspaceWindow = initCanvas(explorerWidth, height, "explorer.bmp");
 
-    INIT_COLOR(red,0xff0000);
-    INIT_COLOR(green,0x00ff00);
-    INIT_COLOR(blue,0x0000ff);
+    INIT_COLOR(C_red,0xff0000);
+    INIT_COLOR(C_green,0x00ff00);
+    INIT_COLOR(C_blue,0x0000ff);
     INIT_COLOR(slack_blue,0x321eb1);
-    INIT_COLOR(fuschia,0xe60368);
-    INIT_COLOR(yeller,0xf9db17);
-    INIT_COLOR(indigo,0x6e00fd);
-    INIT_COLOR(bluebird,0x1cc2b5);
-    INIT_COLOR(whitxe,0xffffff);
-    INIT_COLOR(blaq,0x000000);
+    INIT_COLOR(C_fuschia,0xe60368);
+    INIT_COLOR(C_yeller,0xf9db17);
+    INIT_COLOR(C_indigo,0x6e00fd);
+    INIT_COLOR(C_bluebird,0x1cc2b5);
+    INIT_COLOR(C_white,0xffffff);
+    INIT_COLOR(C_black,0x000000);
 
-    drawRect(workspaceWindow,0,0,workspaceWindow->width,workspaceWindow->height,&bluebird);
+    drawRect(workspaceWindow,0,0,workspaceWindow->width,workspaceWindow->height,&C_bluebird);
 
     struct ColorVecGradient gradient1;
     gradient1.n_colors = 0;
-    addColorToColorVecGradient(&gradient1,&green);
-    addColorToColorVecGradient(&gradient1,&blue);
+    addColorToColorVecGradient(&gradient1,&C_green);
+    addColorToColorVecGradient(&gradient1,&C_blue);
 		printGradient(&gradient1);
 
     struct ColorVecGradient gradient2;
     gradient2.n_colors = 0;
-    addColorToColorVecGradient(&gradient2,&red);
-    addColorToColorVecGradient(&gradient2,&fuschia);
+    addColorToColorVecGradient(&gradient2,&C_red);
+    addColorToColorVecGradient(&gradient2,&C_fuschia);
 
-    INIT_GRADIENT(beautiful);
-    addColorToColorVecGradient(&beautiful,&yeller);
-    addColorToColorVecGradient(&beautiful,&indigo);
-    addColorToColorVecGradient(&beautiful,&bluebird);
-    addColorToColorVecGradient(&beautiful,&green);
-    addColorToColorVecGradient(&beautiful,&red);
-    addColorToColorVecGradient(&beautiful,&blue);
-    beautiful.loop = 1;
+    INIT_GRADIENT(G_beautiful);
+    addColorToColorVecGradient(&G_beautiful,&C_yeller);
+    addColorToColorVecGradient(&G_beautiful,&C_indigo);
+    addColorToColorVecGradient(&G_beautiful,&C_bluebird);
+    addColorToColorVecGradient(&G_beautiful,&C_green);
+    addColorToColorVecGradient(&G_beautiful,&C_red);
+    addColorToColorVecGradient(&G_beautiful,&C_blue);
+    G_beautiful.loop = 1;
+
+    INIT_GRADIENT(G_rgb);
+    addColorToColorVecGradient(&G_rgb,&C_red);
+    addColorToColorVecGradient(&G_rgb,&C_green);
+    addColorToColorVecGradient(&G_rgb,&C_blue);
 
     /**
      * experiment zone
@@ -244,18 +251,18 @@ int main (int argc, char **argv)
     
     struct ColorVecGradient grnRedBlu;
     grnRedBlu.n_colors = 0;
-    addColorToColorVecGradient(&grnRedBlu,&green);
-    addColorToColorVecGradient(&grnRedBlu,&red);
-    addColorToColorVecGradient(&grnRedBlu,&blue);
+    addColorToColorVecGradient(&grnRedBlu,&C_green);
+    addColorToColorVecGradient(&grnRedBlu,&C_red);
+    addColorToColorVecGradient(&grnRedBlu,&C_blue);
     grnRedBlu.loop = 1;
 
-    INIT_GRADIENT(blackwhite);
-    addColorToColorVecGradient(&blackwhite,&blaq);
-    addColorToColorVecGradient(&blackwhite,&whitxe);
+    INIT_GRADIENT(G_blackwhite);
+    addColorToColorVecGradient(&G_blackwhite,&C_black);
+    addColorToColorVecGradient(&G_blackwhite,&C_white);
 
     int i,j;
     for (i = 0; i < beall->width; i++) {
-      struct ColorVec clr = getColorFromGradient(&beautiful,(float)i/(float)background->width);
+      ColorVec clr = getColorFromGradient(&G_beautiful,(float)i/(float)background->width);
       drawLine(background,i,0,i,background->height,&clr);
     }
 
@@ -286,7 +293,7 @@ int main (int argc, char **argv)
 
     XSetStandardProperties(dis,win,"Boy Game","BGIcon",None,NULL,0,NULL);
     XSelectInput(dis, win, KeyPressMask | KeyReleaseMask | 
-                 ButtonPressMask | ButtonReleaseMask);
+                 ButtonPressMask | ButtonReleaseMask | PointerMotionMask | FocusChangeMask);
 
     GC gc;
     gc = XCreateGC(dis,win,0,0);
@@ -347,6 +354,10 @@ int main (int argc, char **argv)
     int pressedX, pressedY;
     int releasedX, releasedY;
 
+		int sqrt= 6;
+		int hl_x = -1;
+		int hl_y = -1;
+
     /**
      * Run Loop
      */
@@ -356,17 +367,18 @@ int main (int argc, char **argv)
       right_pressed = 0;
       left_pressed = 0;
 
+			int clk_x = -1, clk_y = -1;
+
 
       /**
        * Block: Register X Inputs
        */
       int p_watermark;
-      while(p_watermark = XPending(dis)) {
-        if (p_watermark > watermark) {
-          watermark = p_watermark;
-          printf("world record: max events per frame: %d\n",watermark);
-        }
+			p_watermark = XPending(dis);
+
+			while (p_watermark > 0) {
         XNextEvent(dis,&event);
+				p_watermark--;
         switch (event.type) {
           case KeyPress:
             XLookupString(&event.xkey,NULL,0,&keyGet,0);
@@ -389,6 +401,15 @@ int main (int argc, char **argv)
                 right_pressed = 1;
                 acceling_right = 1;
                 break;
+              case XK_Left:
+                sqrt--;
+								if (sqrt < 1) sqrt= 1;
+								printf("Sqrt chang'd to %d.\n",sqrt);
+                break;
+              case XK_Right:
+                sqrt++;
+								printf("Sqrt chang'd to %d.\n",sqrt);
+                break;
               case XK_p:
                 workspace_display = (workspace_display==1) ? 0 : 1;
                 break;
@@ -408,20 +429,29 @@ int main (int argc, char **argv)
               break;
             }
             break;
+					case MotionNotify:
+						hl_x = event.xmotion.x;
+						hl_y = event.xmotion.y;
+						break;
+					case FocusOut:
+						hl_x = -1;
+						hl_y = -1;
+						break;
           case ButtonPress:
             XButtonEvent xbutton = event.xbutton;
             switch(xbutton.button) {
               case Button1:
-                addEntityToWorld(xbutton.x,xbutton.y,BALL);
+								clk_x = event.xbutton.x;
+								clk_y = event.xbutton.y;
+								printf("Rclick registered at (%d,%d).\n",event.xbutton.x,event.xbutton.y);
                 break;
               case Button3:
-                addEntityToWorld(xbutton.x,xbutton.y,SQUARE);
+								printf("Haha, you left clicked at (%d,%d)! L O L!!!\n",event.xbutton.x,event.xbutton.y);
                 break;
               break;
             }
             break;
         }
-        break;
       }
       XFlush(dis);
 
@@ -429,141 +459,74 @@ int main (int argc, char **argv)
        * Block: Change state of game based on input
        */
 
-      // if (boy_on_ground) {
-      //   if (acceling_right || right_pressed) {
-      //     boy_momentum_x += accel_x;
-      //   }
+			int plib_x = 115, plib_y = 115, plib_width = 70, plib_height = 70;
+			int plib_active;
 
-      //   if (acceling_left || left_pressed) {
-      //     boy_momentum_x -= accel_x;
-      //   }
-      // }
+			// Check our little button for pressage!
+			if (hl_x>=plib_x&&hl_x<plib_x+plib_width&&hl_y>=plib_y&&hl_y<plib_y+plib_height)
+				plib_active = 1;
+			else
+				plib_active = 0;
 
-      // boy_x_prev = boy_x;
-      // boy_y_prev = boy_y;
-      // boy_y -= boy_momentum_y;
-      // boy_x += boy_momentum_x;
-
-      // if (boy_on_ground == 0)
-      //   boy_momentum_y -= gravity_constant;
-      // else {
-      //   if (boy_momentum_x < 0-friction_constant)
-      //     boy_momentum_x += friction_constant;
-      //   else if (boy_momentum_x > friction_constant)
-      //     boy_momentum_x -= friction_constant;
-      //   else
-      //     boy_momentum_x = 0;
-      // }
-
-      // if (doesCollide(boy_x,boy_y)) {
-      //   boy_x++;
-      // }
-
-      // int correctionX = collidesX(boy_x,boy_x+boy_width);
-      // int correctionY = collidesY(boy_y,boy_y+boy_width);
-      // if (correctionX != 0) {
-      //   boy_x += correctionX;
-      //   boy_momentum_x = 0;
-      // }
-
-      // if (boy_y < 0) {
-      //   boy_y = 0;
-      //   boy_momentum_y = 0;
-      // }
-      // if (boy_y > height) {
-      //   boy_on_ground = 1;
-      //   boy_y = height;
-      //   boy_momentum_y = 0;
-      // }
-      // if (boy_x <= 0) {
-      //   boy_momentum_x = 0;
-      //   boy_x = 0;
-      // }
-      // if (boy_x > width) {
-      //   boy_momentum_x = 0;
-      //   boy_x = width;
-      // }
-
-      // /**
-      //  * Block: Change natural state of game
-      //  */
-
-      // for (i = 0; i < n_entities; i++) {
-      //   Entity *e = &entities[i];
-      //   // Move entities
-      //   if (e->type==SQUARE) continue;
-      //   e->x += e->m_x;
-      //   e->y -= e->m_y;
-
-      //   e->m_y -= gravity_constant;
-      //   if (e->y < 0) {
-      //     e->y = 0;
-      //     e->m_y = 0;
-      //   }
-      //   if (e->y > height-1) {
-      //     e->y = height-1;
-      //     e->m_y = (e->m_y *-1) /2;
-      //   }
-      //   if (e->x <= 0) {
-      //     e->x = 0;
-      //     e->m_x *= -1;
-      //   }
-      //   if (e->x > width-1) {
-      //     e->x = width-1;
-      //     e->m_x *= -1;
-      //   }
-      //   if (e->m_x > 10 || e->m_x < -10) e->m_x = 0;
-      // }
+			if (clk_x>=plib_x&&clk_x<plib_x+plib_width&&clk_y>=plib_y&&clk_y<plib_y+plib_height)
+				toggleAnimation();
 
       /**
        * Block: Manipulate canvas
        */
 
-      drawRect(beall,0,0,width,height,&blaq);
-      drawRect(beall,width*9/10,width*9/10,width/10,height/10,&yeller);
-      etchCircle(beall,width/3,height/3,width/4,&fuschia);
+			int chunckwid = beall->width/sqrt;
+			int chunckhei = beall->height/sqrt;
+			for (i = 0; i < sqrt*sqrt; i++)
+				sqrt%2==1?
+					etchRectWH(beall,i%sqrt*chunckwid,i/sqrt*chunckhei,chunckwid,chunckhei,i%2==0?&C_white:&C_black):
+					i/sqrt%2==0?
+						etchRectWH(beall,i%sqrt*chunckwid,i/sqrt*chunckhei,chunckwid,chunckhei,i%2==0?&C_white:&C_black):
+						etchRectWH(beall,i%sqrt*chunckwid,i/sqrt*chunckhei,chunckwid,chunckhei,i%2!=0?&C_white:&C_black);
 
-      // float clockrotation = (float)iter/(float)period1;
-      // float sin1 = sinf((float)iter/48.3f);
-      // float sin2 = sinf((float)iter/49.0f);
-      // float iterstraight = (float)(iter % 100)/100.0f;
-      // float iterstraight2 = (float)(iter % 1000)/1000.0f;
-      // struct ColorVec clr = getColorFromGradient(&beautiful,sin1);
-      // struct ColorVec clr2 = getColorFromGradient(&grnRedBlu,iterstraight);
-      // struct ColorVec clr3 = getColorFromGradient(&beautiful,iterstraight);
+			for (i = 0; i < sqrt*sqrt; i++)
+				sqrt%2==1?
+					fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2==0?&C_yeller:i/sqrt%2==0?&C_bluebird:&C_indigo):
+					i/sqrt%2==0?
+						fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2==0?&C_yeller:&C_bluebird):
+						fillRectWH(beall,i%sqrt*chunckwid+1,i/sqrt*chunckhei+1,chunckwid-2,chunckhei-2,i%2!=0?&C_yeller:&C_indigo);
 
-      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2,&clr);
-      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2-1,&blaq);
-      // etchCircle(beall,boy_x+boy_width/2,boy_y, boy_width/2-2,&clr2);
-
-
-
-      // drawLine(zeal,boy_x_prev,boy_y_prev,boy_x,boy_y,&clr2);
-      drawRect(beall,30,30,40,40,&yeller);
-      drawRect(beall,30,40,40,50,&indigo);
-      drawRect(beall,30,50,40,60,&bluebird);
-      drawSpriteToCanvas(beall,&googah,100,100);
-
-      drawRect(beall,50,50,60,60,&red);
-      drawRect(beall,50,50,60,60,&green);
-      drawRect(beall,50,50,60,60,&blue);
-      drawRect(beall,1,1,11,11,&red);
-
-      // for (i = 0; i < n_entities; i++) {
-      //   entities[i].drawEntity(&entities[i],beall,&yeller);
-      // }
+			etchRectWH(beall,41,39,20,42,&C_red);
+			int logoRange = 40;
+			ColorVec temp;
+			for (i = 0; i < logoRange; i++) {
+				temp = getColorFromGradient(&G_blackwhite,(float)i/(float)(logoRange-1));
+				drawLine(beall,41,40+i,61,40+i,&temp);
+			}
       
+			etchRectWH(beall,29,29,12,62,&C_red);
+			fillRectWH(beall,30,30,10,10,&C_yeller);
+			fillRectWH(beall,30,40,10,10,&C_indigo);
+			fillRectWH(beall,30,50,10,10,&C_bluebird);
+			fillRectWH(beall,30,60,10,10,&C_fuschia);
+			fillRectWH(beall,30,70,10,10,&C_white);
+			fillRectWH(beall,30,80,10,10,&C_black);
+
+			etchRectWH(beall,49,29,22,62,&C_red);
+      fillRectWH(beall,50,30,20,20,&C_yeller);
+      fillRectWH(beall,50,50,20,20,&C_indigo);
+      fillRectWH(beall,50,70,20,20,&C_bluebird);
+      etchRectWH(beall,50,30,20,20,&C_white);
+      etchRectWH(beall,50,50,20,20,&C_black);
+      etchRectWH(beall,50,70,20,20,&C_white);
+
+			etchRectWH(beall,plib_x,plib_y,plib_width,plib_height,&C_black);
+			plib_active?
+			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_red):
+			fillRectWH(beall,plib_x+1,plib_y+1,plib_width-2,plib_height-2,&C_white);
 
       /**
        * Block: Draw X Image to screen 
        */
+			
       flashCanvasToXImage(beall,xim,0,0);
-      // if (toggle_guy == 1 ) flashCanvasToXImage(zeal,xim,0,0);
-      // if (workspace_display == 1 ) flashCanvasToXImage(workspaceWindow,xim,(width/3)*2,0);
       int ret = XPutImage(dis,win,gc,xim,0,0,0,0,xim->width,xim->height);
       
-
-      iter++;
 
       endFrameCalc = get_time();
       frameCalcTotal = (endFrameCalc - startFrameCalc)*1000000.0f;
@@ -578,8 +541,7 @@ int main (int argc, char **argv)
 
       } else 
         usleep(sleepTime);
-
-      
+      iter++;
     }
 
     XDestroyImage(xim);
@@ -593,4 +555,9 @@ int main (int argc, char **argv)
 
     free(beall);
     destroySprite(&googah);
+}
+
+int toggleAnimation(void) {
+	printf("Write the function ToggleAnimation!!! Oh, and develop the class, yo!\n");
+	return 0;
 }
