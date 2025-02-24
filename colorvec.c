@@ -25,10 +25,10 @@ void initColor(struct ColorVec *clr, unsigned char r, unsigned char g, unsigned 
  * 0xRRGGBB or 0xAARRGGBB
  */
 void initColorHex(struct ColorVec *clr, unsigned int hex) {
-  clr->r = hex>>16;
-  clr->g = hex>>8;
-  clr->b = hex>>0;
-  if ((clr->a = hex>>24) == 0x00) // Assume missing Alpha component means full alpha
+  clr->r = hex>>RSHIFT_RED;
+  clr->g = hex>>RSHIFT_GREEN;
+  clr->b = hex>>RSHIFT_BLUE;
+  if ((clr->a = hex>>RSHIFT_ALPHA) == 0x00) // Assume missing Alpha component means full alpha
     clr->a = 0xff;
 }
 
@@ -37,7 +37,7 @@ void printColorVec(struct ColorVec *clr) {
 }
 
 
-void addColorToColorVecGradient(struct ColorVecGradient *cvg, struct ColorVec *clr) {
+void addColorToColorVecGradient(struct ColorVecGradient *cvg, const struct ColorVec *clr) {
   if (cvg->n_colors == MAX_GRADIENT_COLORS) return;
   cvg->gradient[cvg->n_colors].r = clr->r;
   cvg->gradient[cvg->n_colors].g = clr->g;

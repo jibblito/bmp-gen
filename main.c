@@ -22,6 +22,10 @@
 #include "transformations.c"
 #include <X11/Xutil.h>
 
+#include <ctype.h>
+
+#include "tbox.h"
+
 #include <unistd.h> // usleep()
 #include <sys/time.h> // gettimeofday()
 #include <string.h> // strlen()
@@ -29,25 +33,22 @@
 
 int toggleAnimation();
 double get_time(void);
+void fillRandString (char *, int);
 
 int main (int argc, char **argv)
 {
     // Generate square 480x480 image
-    int height = 600;
-    int width = 600;
+    int height = 480;
+    int width = 480;
     struct Canvas *beall = initCanvas(width, height, "Bealle!");
 
 		// Palette!
-    INIT_COLOR(C_red,0xff0000);
-    INIT_COLOR(C_green,0x00ff00);
-    INIT_COLOR(C_blue,0x0000ff);
     INIT_COLOR(C_slackblue,0x321eb1);
     INIT_COLOR(C_fuschia,0xe60368);
     INIT_COLOR(C_yeller,0xf9db17);
     INIT_COLOR(C_indigo,0x6e00fd);
     INIT_COLOR(C_bluebird,0x1cc2b5);
-    INIT_COLOR(C_white,0xffffff);
-    INIT_COLOR(C_black,0x000000);
+    INIT_COLOR(C_gray214,0xd0d0d0);
 
     struct ColorVecGradient gradient1;
     gradient1.n_colors = 0;
@@ -146,6 +147,26 @@ int main (int argc, char **argv)
     KeySym keyGet;
 		int iter = 0, running = 1;
 		int i;
+
+		TboxFont beagle_font = load_font("beagle.bmpfnt");
+		TboxFont dingo_font = load_font("dingo.font");
+		TboxColorPalette tbox_cp = { C_gray214, C_white,C_blue,C_red,C_black };
+		TboxColorPalette tbox_cp2 = { C_fuschia, C_yeller,C_black,C_red,C_black };
+		TboxColorPalette tbox_cp3 = { C_green, C_bluebird,C_fuschia,C_blue,C_red };
+		Tbox tbox[10];
+
+		char *randstring = malloc(TBOX_MAX_CHAR);
+
+		tbox_init(tbox,&beagle_font,100,100,30,30,0,"My Tbox",tbox_cp);
+		fillRandString (randstring, tbox->n_cells);
+		tbox_setText(tbox, randstring);
+		tbox_init(tbox+1,&dingo_font,130,130,10,10,1,"My Tbox 2",tbox_cp2);
+		fillRandString (randstring, (tbox+1)->n_cells);
+		tbox_setText(tbox+1, randstring);
+		tbox_init(tbox+2,&dingo_font,20,300,20,2,3,"My Tbox 3",tbox_cp3);
+		fillRandString (randstring, (tbox+2)->n_cells);
+		tbox_setText(tbox+2, randstring);
+
 
     /**
      * Run Loop
@@ -281,10 +302,10 @@ drawplib:
 drawdebuglogo:
 			etchRectWH(beall,41,39,20,42,&C_red);
 			int logoRange = 40;
-			ColorVec temp;
+			ColorVec C_temp;
 			for (i = 0; i < logoRange; i++) {
-				temp = getColorFromGradient(&G_blackwhite,(float)i/(float)(logoRange-1));
-				drawLine(beall,41,40+i,61,40+i,&temp);
+				C_temp = getColorFromGradient(&G_blackwhite,(float)i/(float)(logoRange-1));
+				drawLine(beall,41,40+i,61,40+i,&C_temp);
 			}
 			etchRectWH(beall,29,29,12,62,&C_red);
 			fillRectWH(beall,30,30,10,10,&C_yeller);
@@ -301,6 +322,22 @@ drawdebuglogo:
       etchRectWH(beall,50,30,20,20,&C_white);
       etchRectWH(beall,50,50,20,20,&C_black);
       etchRectWH(beall,50,70,20,20,&C_white);
+
+			INIT_COLOR(C_gray214,0xd0d0d0);
+			for (i = 0; i < 10; i++) {
+				if (iter % 2 == 0) {
+					fillRandString (randstring, (tbox+i)->n_cells);
+					tbox_setText(tbox+i, randstring);
+				}
+				tbox_renderToCanvas(beall, tbox+i);
+			}
+
+
+			render_entire_font(beall,&beagle_font,50,500,&C_blue,-1);
+			render_entire_font(beall,&dingo_font,50,550,&C_red,-1);
+
+			fillRectWH(beall,400+sinf(((float)(iter%40)/40.0f)*M_PI*2)*40,400+cosf(((float)(iter%40)/40.0f)*M_PI*2)*40,40,40,&C_blue);
+			etchRectWH(beall,400+sinf(((float)(iter%40)/40.0f)*M_PI*2)*40,400+cosf(((float)(iter%40)/40.0f)*M_PI*2)*40,40,40,&C_white);
 
 
       /**
@@ -330,6 +367,18 @@ drawdebuglogo:
     XFreeGC(dis,gc);
     XCloseDisplay(dis);
     free(beall);
+		free(randstring);
+}
+
+void fillRandString (char *str, int len) {
+	int i = 0;
+	while (i < len) {
+		unsigned char randchar = rand() % 255;
+		if (isupper(randchar)) {
+			*(str+i) = randchar;
+			i++;
+		}
+	}
 }
 
 // time of day

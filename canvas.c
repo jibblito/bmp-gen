@@ -19,7 +19,14 @@ struct Canvas *initCanvas(int width, int height, char *name) {
   cvs->height = height;
   cvs->width = width;
   snprintf(cvs->name,sizeof(cvs->name), name);
+	cvs->offset_x = 0;
+	cvs->offset_y = 0;
   return cvs;
+}
+
+void set_canvas_offset(Canvas *cvs,int x, int y) {
+	cvs->offset_x = x;
+	cvs->offset_y = y;
 }
 
 /**
@@ -65,11 +72,11 @@ int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offse
   }
   blueLShift = i;
 
-  int j;
+	int yr, xr;
   unsigned int pixel;
-  for (i = offset_y; i < cvs->height+offset_y && i < xim->height; i++) {
-    for (j = offset_x; j < cvs->width+offset_x && j < xim->width; j++) {
-      pixel = *(cvs->image+i*cvs->width+j);
+  for (yr = 0; yr < cvs->height && yr+offset_y < xim->height; yr++) {
+    for (xr = 0; xr < cvs->width && xr+offset_x < xim->width; xr++) {
+      pixel = *(cvs->image+yr*cvs->width+xr);
       // translate RGBA to XImage's pixel format
       unsigned int xPixel = pixel >> RSHIFT_RED << redLShift & xim->red_mask;
       xPixel |= pixel >> RSHIFT_GREEN << greenLShift & xim->green_mask;
@@ -79,10 +86,10 @@ int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offse
         /*
          * Deal with compositing
          */
-        unsigned int beforePixel = xim->f.get_pixel(xim,j,i);
+        unsigned int beforePixel = xim->f.get_pixel(xim,xr+offset_x,yr+offset_y);
         // xim->f.put_pixel(xim,j,i,0xffff0000);
       } else {
-        xim->f.put_pixel(xim,j,i,xPixel);
+        xim->f.put_pixel(xim,xr+offset_x,yr+offset_y,xPixel);
       }
     }
   }
@@ -180,4 +187,9 @@ unsigned char* createBitmapInfoHeader (int height, int width)
     infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL*8);
 
     return infoHeader;
+}
+
+int canvas_intersect(Canvas *cvs,int x, int y) {
+	if (x <= cvs->width + cvs->offset_x && x >= cvs->offset_x && y > cvs->offset_y && y <=cvs->height + cvs->offset_y) return 1;
+	else return 0;
 }

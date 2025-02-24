@@ -14,7 +14,7 @@
  * Plot a point on the canvas! The basic functionality-function of the
  * whole class of functions, yo!
  */
-int plot(Canvas *cvs, int x, int y, ColorVec *clr) {
+int plot(Canvas *cvs, int x, int y, const ColorVec *clr) {
   if (x >cvs->width-1 || x < 0) {
     return 1;
   }
@@ -31,11 +31,62 @@ int plot(Canvas *cvs, int x, int y, ColorVec *clr) {
   return 0;
 }
 
+int plot_hex(Canvas *cvs, int x, int y, unsigned int pxclr) {
+  if (x >cvs->width-1 || x < 0) {
+    return 1;
+  }
+  if (y > cvs->height-1 || y < 0) {
+    return 1;
+  }
+	INIT_COLOR(clr,pxclr);
+  unsigned int *pixpointer = cvs->image + y*cvs->width + x;
+  // Format for canvas: 
+  *pixpointer = 0x00000000;
+  *pixpointer |= (unsigned int) pxclr << RSHIFT_RED;
+  *pixpointer |= (unsigned int) pxclr << RSHIFT_GREEN;
+  *pixpointer |= (unsigned int) pxclr << RSHIFT_BLUE;
+  *pixpointer |= (unsigned int) pxclr << RSHIFT_ALPHA;
+  return 0;
+}
+
+int darken_percent_pixel(Canvas *cvs, int x, int y, float pct, const ColorVec *clr) {
+  if (x >cvs->width-1 || x < 0)
+    return 1;
+  if (y > cvs->height-1 || y < 0)
+    return 1;
+	if (pct <= 0.0f) return 0;
+	if (pct >= 1.0f) {
+		plot(cvs,x,y,clr);
+		return 0;
+	}
+	float inv_pct = 1.0f-pct;
+	unsigned int *pixeltarget = cvs->image + y*cvs->width + x;
+
+	float prev_r = (float)(*pixeltarget >> RSHIFT_RED		& 0xff) * inv_pct;
+	float prev_g = (float)(*pixeltarget >> RSHIFT_GREEN	& 0xff) * inv_pct;
+	float prev_b = (float)(*pixeltarget >> RSHIFT_BLUE	& 0xff) * inv_pct;
+	float prev_a = (float)(*pixeltarget >> RSHIFT_ALPHA	& 0xff) * inv_pct;
+
+	prev_r += ((float)clr->r)*pct;
+	prev_g += ((float)clr->g)*pct;
+	prev_b += ((float)clr->b)*pct;
+	// prev_a += (float)clr->a*pct;
+	prev_a = 255.0f; /* dw bout alpha for now - deal with soon */
+
+  *pixeltarget = 0x00000000;
+  *pixeltarget |= (unsigned int) prev_r << RSHIFT_RED;
+  *pixeltarget |= (unsigned int) prev_g << RSHIFT_GREEN;
+  *pixeltarget |= (unsigned int) prev_b << RSHIFT_BLUE;
+  *pixeltarget |= (unsigned int) prev_a << RSHIFT_ALPHA;
+	
+	return 0;
+}
+
 
 /**
  * Draw a rectangle of a set color
  */
-void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr) {
+void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, const ColorVec *clr) {
   int x_start, y_start, x_end, y_end;
 
   if (x1 <= x2) {
@@ -60,7 +111,7 @@ void drawRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec* clr) {
 // Could we exploit continuity of memory here? For example - rows of pixels
 // are contiguous in memory. Could use some sort of SIMD to make that become
 // dope.
-void fillRectWH(Canvas *cvs, int x, int y, int w, int h, ColorVec* clr) {
+void fillRectWH(Canvas *cvs, int x, int y, int w, int h, const ColorVec *clr) {
 	int xr = x, yr;
 	for (; xr < x + w; xr++) {
 		for (yr = y; yr < y + h; yr++) {
@@ -72,7 +123,7 @@ void fillRectWH(Canvas *cvs, int x, int y, int w, int h, ColorVec* clr) {
 /**
  * Etch a rectangle of a set color
  */
-void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec *clr) {
+void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, const ColorVec *clr) {
   int x_start = x1, y_start = y1, x_end = x2, y_end = y2;
 
 	// Assign Ordering of X and Y
@@ -99,7 +150,7 @@ void etchRect(Canvas *cvs, int x1, int y1, int x2, int y2, ColorVec *clr) {
 /**
  * Etch a rectangle w/ width and height, aka the best way!
  */
-void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr) {
+void etchRectWH(Canvas *cvs, int x, int y, int width, int height, const ColorVec *clr) {
 	int xr = x, yr = y+1;
 	for (; xr < x + width; xr++) {
 		plot(cvs,xr,y,clr);
@@ -117,7 +168,7 @@ void etchRectWH(Canvas *cvs, int x, int y, int width, int height, ColorVec *clr)
  * for simplicity and .. honestly I don't like antialiased lines that much...
  * Perhaps we can have another function drawAntiAliasedLine.. perhaps.
  */
-void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, ColorVec* clr) {
+void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, const ColorVec *clr) {
 
   int x_start, y_start, x_end, y_end;
 
@@ -158,13 +209,13 @@ void drawLine(Canvas *cvs, int x1,int y1, int x2, int y2, ColorVec* clr) {
   }
 }
 
-void drawLineAngle(Canvas *cvs, int x,int y, float radians, int length, ColorVec* clr) {
+void drawLineAngle(Canvas *cvs, int x,int y, float radians, int length, const ColorVec *clr) {
   int x_offset, y_offset;
   x_offset = sinf(radians) * length;
   y_offset = cosf(radians) * length;
 }
 
-void drawLineAngleSec(Canvas *cvs, int x,int y, float radians, int slength, int elength, ColorVec* clr) {
+void drawLineAngleSec(Canvas *cvs, int x,int y, float radians, int slength, int elength, const ColorVec *clr) {
   if (slength > elength) return;
   int sx_offset, sy_offset, ex_offset, ey_offset;
   sx_offset = sinf(radians) * slength;
@@ -177,7 +228,7 @@ void drawLineAngleSec(Canvas *cvs, int x,int y, float radians, int slength, int 
 /**
  * Etch (outline) a circle, dude!
  */
-void etchCircle(Canvas *cvs, int x, int y, int radius, ColorVec *clr) {
+void etchCircle(Canvas *cvs, int x, int y, int radius, const ColorVec *clr) {
   int rel_x = radius;
   int rel_y = 0;
   plot(cvs,x+rel_x,y+rel_y,clr);

@@ -16,6 +16,7 @@
 
 typedef struct Canvas {
   int height, width;
+	int offset_x, offset_y;
   char name[MAX_FILENAME_LENGTH];
   unsigned int image[];
 } Canvas;
@@ -25,5 +26,7 @@ int flashCanvasToXImage(struct Canvas *cvs, XImage *xim, int offset_x, int offse
 unsigned char* createBitmapFileHeader(int height, int stride);
 unsigned char* createBitmapInfoHeader(int height, int width);
 struct Canvas *initCanvas(int width, int height, char *name);
+void set_canvas_offset(Canvas *,int x, int y);
+int canvas_intersect(Canvas *cvs,int x, int y);
 
 #endif
